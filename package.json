@@ -1,0 +1,40 @@
+{
+  "name": "pi-token-stats",
+  "version": "0.1.0",
+  "description": "Pi extension package for token usage statistics with native select/input dialogs.",
+  "type": "module",
+  "keywords": [
+    "pi-package",
+    "pi",
+    "extension",
+    "token",
+    "stats",
+    "session"
+  ],
+  "license": "MIT",
+  "author": "diwu",
+  "files": [
+    "index.ts",
+    "README.md",
+    "doc"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "typebox": "*"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@types/node": "^22.19.15",
+    "typescript": "^5.9.3",
+    "typebox": "*"
+  },
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}
