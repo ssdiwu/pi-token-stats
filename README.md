@@ -20,18 +20,20 @@
 /tokens 本周
 /tokens 最近一周
 /tokens 昨天
+/tokens 昨天到今天
 /tokens 2026-06-17
 /tokens 2026-06-10 到 2026-06-17
+/tokens 2026/06/10 到 2026/06/17
 /tokens 当前会话
 ```
 
-同时注册 `token_stats` tool（工具），agent 可以在自然语言对话中调用它。例如你问“最近 5 小时 token 花了多少？”时，agent 可以把原始时间表达传给工具并返回统计。
+同时注册 `token_stats` tool（工具），agent 可以在自然语言对话中调用它。例如你问“最近 5 小时 token 花了多少？”时，agent 应优先把已理解好的绝对 `since/until` 时间范围传给工具；若没有结构化范围，也可退回传原始时间表达。
 
 ## UI 行为
 
 在 TUI（终端交互界面）模式中，统计结果使用 Pi 原生 `ctx.ui.select(title, choices)` 提问式对话框显示。
 
-UI 文案会优先跟随 `pi-di18n` 的当前 locale（语言环境）；当前内置 `zh-CN`、`zh-TW`、`en`，其他 locale 回退英文。对话框只提供两个选项：
+UI 文案会优先跟随 `pi-di18n` 的当前 locale（语言环境）；当前内置 `zh-CN`、`zh-TW`、`en`，其他 locale 回退英文。`/tokens` 与对话框里的自由输入会先用当前模型理解时间范围，失败后再回退本地规则解析。对话框只提供两个选项：
 
 - `输入时间范围` / `Enter time range`：打开 Pi 原生 `ctx.ui.input(...)`，可输入 `最近5小时`、`1天`、`本周`、`2026-06-17` 等，然后重新显示统计对话框。
 - `退出` / `Exit`：关闭对话框。
@@ -57,11 +59,12 @@ UI 文案会优先跟随 `pi-di18n` 的当前 locale（语言环境）；当前�
 - 最近一周 / 过去一周 / last week
 - 最近 N 小时 / 最近 N 天 / 最近 N 周
 - 裸时间：`5小时`、`1天`、`2周`
-- 单日：`YYYY-MM-DD`
-- 日期范围：`YYYY-MM-DD 到 YYYY-MM-DD`
+- 单日：`YYYY-MM-DD`、`YYYY/MM/DD`
+- 日期范围：`YYYY-MM-DD 到 YYYY-MM-DD`、`YYYY/MM/DD 到 YYYY/MM/DD`
+- 命名范围：`昨天到今天`（结束边界为当前时刻）、`昨天到现在`
 - 当前会话 / session
 
-无法识别的时间表达会回退到今天，并在标题里保留原始输入提示。
+当模型与本地规则都无法识别时，会回退到今天，并在标题里保留原始输入提示。
 
 ## 安装
 
@@ -82,5 +85,6 @@ UI 文案会优先跟随 `pi-di18n` 的当前 locale（语言环境）；当前�
 ```bash
 PI_SKIP_VERSION_CHECK=1 pi --no-extensions --extension ./index.ts --no-session -p "/tokens"
 PI_SKIP_VERSION_CHECK=1 pi --no-extensions --extension ./index.ts --no-session -p "/tokens 最近5小时"
+PI_SKIP_VERSION_CHECK=1 pi --no-extensions --extension ./index.ts --no-session -p "/tokens 昨天到今天"
 PI_SKIP_VERSION_CHECK=1 pi --no-extensions --extension ./index.ts --no-session -p "/tokens 当前会话"
 ```

@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, join } from "node:path";
+import { complete } from "@earendil-works/pi-ai";
 import type { ExtensionAPI, ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
@@ -45,6 +46,25 @@ interface TimeRange {
 	until: number;
 }
 
+interface RangeRequest {
+	range?: string;
+	since?: string;
+	until?: string;
+	label?: string;
+}
+
+interface LlmRangeResolution {
+	kind: "range" | "session" | "unparsed";
+	since?: string;
+	until?: string;
+	label?: string;
+}
+
+type RangeBoundary = {
+	label: string;
+	timestamp: number;
+};
+
 type UiLocale = "en" | "zh-CN" | "zh-TW";
 
 type I18nApiLike = {
@@ -52,7 +72,10 @@ type I18nApiLike = {
 };
 
 const TokenStatsParams = Type.Object({
-	range: Type.Optional(Type.String({ description: "Natural-language range, e.g. 今天, 最近5小时, 本周, 最近一周, 2026-06-17" })),
+	range: Type.Optional(Type.String({ description: "Natural-language range, e.g. 今天, 最近5小时, 本周, 最近一周, 昨天到今天" })),
+	since: Type.Optional(Type.String({ description: "Absolute local start time, e.g. 2026-06-18 00:00:00" })),
+	until: Type.Optional(Type.String({ description: "Absolute local end time, e.g. 2026-06-19 03:50:57" })),
+	label: Type.Optional(Type.String({ description: "Display label for the selected range, e.g. 昨天到今天" })),
 });
 
 const MESSAGES = {
@@ -371,7 +394,8 @@ function messageTotal(stats: TokenStats): number {
 }
 
 function parseRange(input: string | undefined, locale: UiLocale, now = new Date()): TimeRange | "session" {
-	const raw = (input ?? "").trim().toLowerCase();
+	const rawInput = (input ?? "").trim();
+	const raw = rawInput.toLowerCase();
 	const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
 	if (!raw || ["today", "day", "d", "今天", "當天", "当天", "日报", "日報"].includes(raw)) {
@@ -395,6 +419,9 @@ function parseRange(input: string | undefined, locale: UiLocale, now = new Date(
 		return { label: t(locale, "rangeYesterday"), since: start.getTime(), until: todayStart.getTime() - 1 };
 	}
 
+	const namedRange = parseNamedRange(rawInput, locale, now);
+	if (namedRange) return namedRange;
+
 	const relative = raw.match(/(?:(?:最近|過去|过去|近|last)\s*)?(\d+)\s*(?:个|個)?\s*(小时|小時|hour|hours|h|天|日|day|days|d|周|週|week|weeks|w)/i);
 	if (relative) {
 		const count = Number(relative[1]);
@@ -406,19 +433,178 @@ function parseRange(input: string | undefined, locale: UiLocale, now = new Date(
 		return { label: t(locale, "last", { count, unit: labelUnit }), since: now.getTime() - count * unitMs, until: now.getTime() };
 	}
 
-	const absolute = raw.match(/(\d{4}-\d{1,2}-\d{1,2})(?:\s*(?:到|至|~)\s*(\d{4}-\d{1,2}-\d{1,2}))?/);
+	const absolute = rawInput.match(/(\d{4}[\/-]\d{1,2}[\/-]\d{1,2})(?:\s*(?:到|至|~|～|—|–)\s*(\d{4}[\/-]\d{1,2}[\/-]\d{1,2}))?/i);
 	if (absolute) {
 		const start = parseLocalDate(absolute[1]);
 		const end = absolute[2] ? parseLocalDate(absolute[2]) : new Date(start);
 		end.setDate(end.getDate() + 1);
-		return { label: absolute[2] ? `${absolute[1]} ~ ${absolute[2]}` : absolute[1], since: start.getTime(), until: end.getTime() - 1 };
+		return { label: absolute[2] ? `${normalizeDateLabel(absolute[1])} ~ ${normalizeDateLabel(absolute[2])}` : normalizeDateLabel(absolute[1]), since: start.getTime(), until: end.getTime() - 1 };
 	}
 
-	return { label: t(locale, "rangeFallback", { input: input?.trim() || "default" }), since: todayStart.getTime(), until: now.getTime() };
+	return { label: t(locale, "rangeFallback", { input: rawInput || "default" }), since: todayStart.getTime(), until: now.getTime() };
+}
+
+function parseNamedRange(input: string, locale: UiLocale, now: Date): TimeRange | undefined {
+	const parts = input.split(/\s*(?:到|至|~|～|—|–)\s*/).map((part) => part.trim()).filter(Boolean);
+	if (parts.length !== 2) return undefined;
+
+	const start = parseRangeBoundary(parts[0], "start", locale, now);
+	const end = parseRangeBoundary(parts[1], "end", locale, now);
+	if (!start || !end || start.timestamp > end.timestamp) return undefined;
+
+	return { label: `${start.label} ~ ${end.label}`, since: start.timestamp, until: end.timestamp };
+}
+
+function parseRangeBoundary(input: string, side: "start" | "end", locale: UiLocale, now: Date): RangeBoundary | undefined {
+	const raw = input.trim();
+	const normalized = raw.toLowerCase();
+	const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+	const yesterdayStart = new Date(todayStart);
+	yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+	const yesterdayEnd = new Date(todayStart.getTime() - 1);
+
+	if (["today", "今天", "當天", "当天"].includes(normalized)) {
+		return { label: t(locale, "rangeToday"), timestamp: side === "start" ? todayStart.getTime() : now.getTime() };
+	}
+	if (["yesterday", "昨天"].includes(normalized)) {
+		return { label: t(locale, "rangeYesterday"), timestamp: side === "start" ? yesterdayStart.getTime() : yesterdayEnd.getTime() };
+	}
+	if (["now", "现在", "現在", "当前", "當前"].includes(normalized)) {
+		return { label: side === "start" ? raw : normalizeBoundaryLabel(raw), timestamp: now.getTime() };
+	}
+	if (isDateInput(raw)) {
+		const date = parseLocalDate(raw);
+		if (side === "start") return { label: normalizeDateLabel(raw), timestamp: date.getTime() };
+		const end = new Date(date);
+		end.setDate(end.getDate() + 1);
+		return { label: normalizeDateLabel(raw), timestamp: end.getTime() - 1 };
+	}
+
+	return undefined;
+}
+
+function isDateInput(value: string): boolean {
+	return /^\d{4}[\/-]\d{1,2}[\/-]\d{1,2}$/.test(value.trim());
+}
+
+function isSessionRange(value: string | undefined): boolean {
+	const raw = value?.trim().toLowerCase();
+	if (!raw) return false;
+	return ["session", "s", "current", "当前", "當前", "当前会话", "當前會話"].includes(raw);
+}
+
+function normalizeBoundaryLabel(value: string): string {
+	return value.trim().replace(/\s+/g, " ");
+}
+
+function normalizeDateLabel(value: string): string {
+	const [year, month, day] = value.trim().split(/[\/-]/).map(Number);
+	return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function parseAbsoluteDateTime(value: string, side: "start" | "end"): number | undefined {
+	const raw = value.trim();
+	const local = raw.match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})(?:[ T](\d{1,2})(?::(\d{1,2}))?(?::(\d{1,2}))?)?$/);
+	if (local) {
+		const year = Number(local[1]);
+		const month = Number(local[2]);
+		const day = Number(local[3]);
+		const hasTime = local[4] !== undefined;
+		const hours = hasTime ? Number(local[4]) : side === "start" ? 0 : 23;
+		const minutes = hasTime ? Number(local[5] ?? 0) : side === "start" ? 0 : 59;
+		const seconds = hasTime ? Number(local[6] ?? 0) : side === "start" ? 0 : 59;
+		return new Date(year, month - 1, day, hours, minutes, seconds).getTime();
+	}
+
+	const parsed = Date.parse(raw);
+	return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function buildStructuredRange(sinceText: string, untilText: string, label?: string): TimeRange | undefined {
+	const since = parseAbsoluteDateTime(sinceText, "start");
+	const until = parseAbsoluteDateTime(untilText, "end");
+	if (since === undefined || until === undefined || since > until) return undefined;
+	return {
+		label: normalizeBoundaryLabel(label || `${sinceText} ~ ${untilText}`),
+		since,
+		until,
+	};
+}
+
+function parseRangeRequest(request: RangeRequest | undefined, locale: UiLocale): TimeRange | "session" {
+	if (request?.since?.trim() && request?.until?.trim()) {
+		const structured = buildStructuredRange(request.since, request.until, request.label);
+		if (structured) return structured;
+	}
+	if (isSessionRange(request?.range)) return "session";
+	return parseRange(request?.range, locale);
+}
+
+function extractResponseText(content: Array<{ type?: string; text?: string }>): string {
+	return content.filter((part) => part?.type === "text" && typeof part.text === "string").map((part) => part.text).join("\n").trim();
+}
+
+function parseLlmRangeResolution(text: string): LlmRangeResolution | undefined {
+	const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1];
+	const rawJson = fenced ?? text.match(/\{[\s\S]*\}/)?.[0];
+	if (!rawJson) return undefined;
+	try {
+		const parsed = JSON.parse(rawJson) as LlmRangeResolution;
+		if (parsed?.kind === "range" || parsed?.kind === "session" || parsed?.kind === "unparsed") return parsed;
+	} catch {
+		// ignore
+	}
+	return undefined;
+}
+
+function buildRangeParsePrompt(input: string, now: Date): string {
+	const nowText = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+	return [
+		"You normalize token-stat time ranges for a CLI command.",
+		`Current local datetime: ${nowText}`,
+		"Return JSON only, no markdown.",
+		"Allowed outputs:",
+		'{"kind":"range","since":"YYYY-MM-DD HH:MM:SS","until":"YYYY-MM-DD HH:MM:SS","label":"用户可读标签"}',
+		'{"kind":"session"}',
+		'{"kind":"unparsed"}',
+		"Rules:",
+		"- Interpret relative dates in local time.",
+		"- If the user ends a range with 今天 / today / 现在 / now / 当前, use the current moment, not end-of-day.",
+		"- If the user gives a plain date as the end of a date range, use 23:59:59 of that date.",
+		"- Keep label concise and faithful to the user's intent.",
+		"- If the user asks for the current session, return kind=session.",
+		`User input: ${input}`,
+	].join("\n");
+}
+
+async function resolveRangeWithLlm(input: string, ctx: ExtensionCommandContext | ExtensionContext): Promise<TimeRange | "session" | undefined> {
+	const model = ctx.model ?? ctx.modelRegistry.getAvailable()[0];
+	if (!model) return undefined;
+
+	const auth = await ctx.modelRegistry.getApiKeyAndHeaders(model);
+	if (!auth.ok || !auth.apiKey) return undefined;
+
+	try {
+		const response = await complete(
+			model,
+			{
+				messages: [{ role: "user", content: [{ type: "text", text: buildRangeParsePrompt(input, new Date()) }], timestamp: Date.now() }],
+			},
+			{ apiKey: auth.apiKey, headers: auth.headers },
+		);
+		const rawResponseText = extractResponseText(response.content);
+		const resolved = parseLlmRangeResolution(rawResponseText);
+		if (!resolved) return undefined;
+		if (resolved.kind === "session") return "session";
+		if (resolved.kind !== "range" || !resolved.since || !resolved.until) return undefined;
+		return buildStructuredRange(resolved.since, resolved.until, resolved.label || input);
+	} catch {
+		return undefined;
+	}
 }
 
 function parseLocalDate(value: string): Date {
-	const [year, month, day] = value.split("-").map(Number);
+	const [year, month, day] = value.split(/[\/-]/).map(Number);
 	return new Date(year, month - 1, day);
 }
 
@@ -496,6 +682,22 @@ function formatDialogBody(range: TimeRange | undefined, stats: TokenStats, sessi
 	return lines.join("\n");
 }
 
+async function buildReportForRequest(request: RangeRequest | undefined, ctx: ExtensionCommandContext | ExtensionContext, locale: UiLocale): Promise<Report> {
+	const range = parseRangeRequest(request, locale);
+	return range === "session" ? buildSessionReport(ctx, locale) : buildRangeReport(range, locale);
+}
+
+async function buildInteractiveReport(rangeText: string | undefined, ctx: ExtensionCommandContext | ExtensionContext, locale: UiLocale): Promise<Report> {
+	const raw = rangeText?.trim();
+	if (!raw) return buildRangeReport(parseRange(undefined, locale) as TimeRange, locale);
+	if (isSessionRange(raw)) return buildSessionReport(ctx, locale);
+	const llmRange = await resolveRangeWithLlm(raw, ctx);
+	if (llmRange === "session") return buildSessionReport(ctx, locale);
+	if (llmRange) return buildRangeReport(llmRange, locale);
+	const fallback = parseRange(raw, locale);
+	return fallback === "session" ? buildSessionReport(ctx, locale) : buildRangeReport(fallback, locale);
+}
+
 async function showDialog(ctx: ExtensionCommandContext | ExtensionContext, title: string, body: string, locale: UiLocale): Promise<void> {
 	if (!ctx.hasUI || ctx.mode !== "tui") {
 		console.log(`${title}\n\n${body}`);
@@ -511,32 +713,28 @@ async function showDialog(ctx: ExtensionCommandContext | ExtensionContext, title
 
 		const range = await ctx.ui.input(t(locale, "inputRange"), t(locale, "inputPlaceholder"));
 		if (!range?.trim()) return;
-		const report = buildReportForRange(range, ctx, locale);
+		const report = await buildInteractiveReport(range, ctx, locale);
 		currentTitle = report.title;
 		currentBody = report.body;
 	}
-}
-
-function buildReportForRange(rangeText: string | undefined, ctx: ExtensionCommandContext | ExtensionContext, locale: UiLocale) {
-	const range = parseRange(rangeText, locale);
-	return range === "session" ? buildSessionReport(ctx, locale) : buildRangeReport(range, locale);
 }
 
 export default function tokenStatsExtension(pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "token_stats",
 		label: "Token Stats",
-		description: "Read Pi session token usage for natural-language time ranges such as today, 最近5小时, 本周, 最近一周, or a date.",
+		description: "Read Pi session token usage for a time range. Prefer structured since/until absolute times when the range is already understood.",
 		promptSnippet: "Read Pi token usage when the user asks about token/cost consumption for a time range.",
 		promptGuidelines: [
 			"Use token_stats when the user asks about Pi token usage, cost, or session consumption in natural language.",
-			"Pass the user's original time expression to token_stats.range, for example 最近5小时, 今天, 本周, 最近一周, or 2026-06-17.",
+			"Prefer passing token_stats.since and token_stats.until as absolute local timestamps plus token_stats.label when you can infer the exact range.",
+			"Use token_stats.range for current session requests or when you need the extension's built-in fallback parsing.",
 			"If the user does not specify a time range, use token_stats with no range; it defaults to today.",
 		],
 		parameters: TokenStatsParams,
 		async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
 			const locale = resolveUiLocale(pi, ctx);
-			const report = buildReportForRange(params.range, ctx, locale);
+			const report = await buildReportForRequest(params, ctx, locale);
 			await showDialog(ctx, report.title, report.body, locale);
 			return {
 				content: [{ type: "text", text: `${report.title}\n\n${report.body}` }],
@@ -546,10 +744,10 @@ export default function tokenStatsExtension(pi: ExtensionAPI) {
 	});
 
 	pi.registerCommand("tokens", {
-		description: "Show Pi token usage. Defaults to today; accepts natural-language ranges like 最近5小时, 本周, 最近一周.",
+		description: "Show Pi token usage. Defaults to today; free-form time input is resolved by the current model first, then by built-in fallback rules.",
 		handler: async (args, ctx) => {
 			const locale = resolveUiLocale(pi, ctx);
-			const report = buildReportForRange(args, ctx, locale);
+			const report = await buildInteractiveReport(args, ctx, locale);
 			await showDialog(ctx, report.title, report.body, locale);
 		},
 	});
