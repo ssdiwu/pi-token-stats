@@ -38,7 +38,7 @@ UI 文案会优先跟随 `pi-di18n` 的当前 locale（语言环境）；当前�
 - `输入时间范围` / `Enter time range`：打开 Pi 原生 `ctx.ui.input(...)`，可输入 `最近5小时`、`1天`、`本周`、`2026-06-17` 等，然后重新显示统计对话框。
 - `退出` / `Exit`：关闭对话框。
 
-本项目明确拒绝 `overlay`（覆盖层）、自绘小窗口和 `confirm`（是/否确认）作为 `/tokens` 主交互，详见 `doc/决策档案/0001-use-native-select-input-dialogs.md`。
+本项目明确拒绝 `overlay`（覆盖层）、自绘小窗口和 `confirm`（是/否确认）作为 `/tokens` 主交互，详见 `doc/决策档案/0001-统一使用原生select与input对话框.md`（索引见 `doc/决策档案/README.md`）。
 
 在 `pi -p`、JSON 或 RPC 等非 TUI 模式中，命令会输出纯文本，方便脚本和测试验证。
 

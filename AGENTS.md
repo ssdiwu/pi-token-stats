@@ -20,7 +20,7 @@ pi-token-stats/
 
 - 只读取 `~/.pi/agent/sessions` 下的 session JSONL，不修改 session 文件。
 - slash command 只保留 `/tokens`，不要新增别名命令。
-- TUI 模式必须使用 Pi 原生 `ctx.ui.select(title, choices)` + `ctx.ui.input(...)` 提问式对话框；拒绝 `overlay`、自绘小窗口和 `ctx.ui.confirm`，详见 `doc/决策档案/0001-use-native-select-input-dialogs.md`；非 TUI 模式保持纯文本输出。
+- TUI 模式必须使用 Pi 原生 `ctx.ui.select(title, choices)` + `ctx.ui.input(...)` 提问式对话框；拒绝 `overlay`、自绘小窗口和 `ctx.ui.confirm`，详见 `doc/决策档案/0001-统一使用原生select与input对话框.md`（索引见 `doc/决策档案/README.md`）；非 TUI 模式保持纯文本输出。
 - 支持 `token_stats` tool（工具）供 agent 在自然语言对话中调用。
 - UI 文案优先跟随 `pi-di18n` 的当前 locale；本包内置 `zh-CN`、`zh-TW`、`en`，其他 locale 回退英文。
 - 不硬编码 API Key（接口密钥）或私密凭据。
@@ -41,7 +41,7 @@ PI_SKIP_VERSION_CHECK=1 pi --no-extensions --extension ./index.ts --no-session -
 三个沉淀出口按边界分工，不混用：
 
 - **`doc/术语表.md`** — 回答"这个词指什么"，收项目特有概念；定义"是什么"，不沾实现细节。惰性创建，术语敲定时当场写。
-- **`doc/决策档案/`** — 回答"为什么这么定"，只收"难逆转 + 无上下文会困惑 + 有真实权衡"的决策（刻碑，记了就不删）。一条一文件，顺序编号 `0001-xxx.md`。
+- **`doc/决策档案/`** — 回答"为什么这么定"，只收"难逆转 + 无上下文会困惑 + 有真实权衡"的决策（刻碑，记了就不删）。一条一文件，顺序编号 `0001-中文标题.md`（项目术语沿用术语表规范叫法）；维护 `README.md` 索引（编号 + 标题 + 一句话主旨），新增 / 更新 ADR 时同步。
 - **`doc/经验笔记.md`** — 回答"这事儿怎么做"，收可改的做法与避坑经验（活页）。门槛：解决一个坑时，如果换一个无上下文的 agent 来会重走一遍，就值得记。格式：现象 + 做法 + 证据。重复发生时在原条目追加证据，不新建条目。
 
 ## 代码工程纪律
