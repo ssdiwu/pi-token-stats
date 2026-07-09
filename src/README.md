@@ -7,7 +7,7 @@
 | 文件 | 职责 |
 |---|---|
 | `types.ts` | 基础类型：session JSONL、量纲、多维、日报模型 |
-| `session-scan.ts` | 异步扫描本地 `~/.pi/agent/sessions/**/*.jsonl` |
+| `session-scan.ts` | 异步扫描本地 `~/.pi/agent/sessions/**/*.jsonl`，支持按文件修改时间过滤 |
 | `usage-rollup.ts` | K0 消耗量纲聚合 |
 | `dimensions.ts` | K1/K2/K3/K5 多维聚合 |
 | `time-range.ts` | `/insights` 时间范围解析 |
@@ -26,7 +26,7 @@
 
 ## 当前日报链
 
-`/insights daily` 和面板第 2 页（昨天日报）共用同一条日报链：
+`/insights daily` 生成完整日报：
 
 1. `session-scan.ts` 扫描本地 session
 2. `report-session-extract.ts` 提取任务 / 完成 / 风险 / 待跟进 / 文件 / 工具事实
@@ -34,7 +34,9 @@
 4. `report-ai-summary.ts` 让当前会话模型按项目输出日报
 5. 模型失败时回退到 `report-markdown.ts`
 6. `day-diff.ts` 追加“差异”段
-7. `day-cache.ts` 缓存历史日报，保证昨天页秒开
+7. `day-cache.ts` 缓存历史日报
+
+无参数面板的数字页只扫描今天有写入的 session 文件；第 2 页只读取昨天的缓存日报并限制为预览，不触发日报生成。缺少缓存时提示运行 `/insights daily`。
 
 ## 约定
 

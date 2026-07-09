@@ -40,6 +40,8 @@ export const MESSAGES = {
 		toolsProfile: "Tool profile (top {count}):",
 		errorsIntel: "Errors: {rate}% ({errors}/{total}), top: {top}",
 		healthFacts: "Context: {count} compaction(s), peak {max} tokens before compact",
+		dailyPreviewHint: "… Run /insights daily for the full report",
+		dailyPreviewUnavailable: "No cached daily report. Run /insights daily to generate it.",
 	},
 	"zh-CN": {
 		rangeToday: "今天",
@@ -71,6 +73,8 @@ export const MESSAGES = {
 		toolsProfile: "工具画像（前 {count}）：",
 		errorsIntel: "错误：{rate}%（{errors}/{total}），最多：{top}",
 		healthFacts: "上下文：压缩 {count} 次，峰值 {max} token",
+		dailyPreviewHint: "… 完整日报请运行 /insights daily",
+		dailyPreviewUnavailable: "暂无缓存日报。请运行 /insights daily 生成完整日报。",
 	},
 	"zh-TW": {
 		rangeToday: "今天",
@@ -102,6 +106,8 @@ export const MESSAGES = {
 		toolsProfile: "工具畫像（前 {count}）：",
 		errorsIntel: "錯誤：{rate}%（{errors}/{total}），最多：{top}",
 		healthFacts: "上下文：壓縮 {count} 次，峰值 {max} token",
+		dailyPreviewHint: "… 完整日報請執行 /insights daily",
+		dailyPreviewUnavailable: "暫無快取日報。請執行 /insights daily 產生完整日報。",
 	},
 } as const;
 

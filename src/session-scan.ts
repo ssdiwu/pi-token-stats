@@ -50,6 +50,18 @@ export async function findSessionFiles(sessionRoot = getDefaultSessionRoot()): P
 	return files.sort();
 }
 
+async function filterFilesModifiedSince(files: string[], modifiedSince: number): Promise<string[]> {
+	const results = await Promise.all(files.map(async (file) => {
+		try {
+			return (await fs.stat(file)).mtimeMs >= modifiedSince ? file : null;
+		} catch {
+			// 无法读取 mtime 时仍交给扫描层处理，保留原本的错误报告语义。
+			return file;
+		}
+	}));
+	return results.filter((file): file is string => Boolean(file));
+}
+
 function toSessionEntry(value: unknown): SessionEntry {
 	return value && typeof value === "object" ? (value as SessionEntry) : {};
 }
@@ -82,22 +94,42 @@ export async function readSessionFile(file: string): Promise<SessionFile> {
 	return { file, ...parsed };
 }
 
+const SCAN_CONCURRENCY = 8;
+
+interface FileScanResult {
+	session?: SessionFile;
+	errors: ScanError[];
+}
+
+async function scanFile(file: string): Promise<FileScanResult> {
+	try {
+		const session = await readSessionFile(file);
+		return { session, errors: (session.errors || []).map((parseError) => ({ file, ...parseError })) };
+	} catch (error) {
+		return { errors: [{ file, line: 0, error: error instanceof Error ? error.message : String(error) }] };
+	}
+}
+
 export async function scanSessions(options: ScanSessionsOptions = {}): Promise<ScanSessionsResult> {
 	const sessionRoot = options.sessionRoot || getDefaultSessionRoot();
-	const files = options.files || (await findSessionFiles(sessionRoot));
+	const discoveredFiles = options.files || (await findSessionFiles(sessionRoot));
+	const files = options.modifiedSince === undefined ? discoveredFiles : await filterFilesModifiedSince(discoveredFiles, options.modifiedSince);
+	const results: FileScanResult[] = new Array(files.length);
+	let nextIndex = 0;
+
+	await Promise.all(Array.from({ length: Math.min(SCAN_CONCURRENCY, files.length) }, async () => {
+		for (;;) {
+			const index = nextIndex++;
+			if (index >= files.length) return;
+			results[index] = await scanFile(files[index]);
+		}
+	}));
+
 	const sessions: SessionFile[] = [];
 	const errors: ScanError[] = [];
-
-	for (const file of files) {
-		try {
-			const session = await readSessionFile(file);
-			sessions.push(session);
-			for (const parseError of session.errors || []) {
-				errors.push({ file, ...parseError });
-			}
-		} catch (error) {
-			errors.push({ file, line: 0, error: error instanceof Error ? error.message : String(error) });
-		}
+	for (const result of results) {
+		if (result.session) sessions.push(result.session);
+		errors.push(...result.errors);
 	}
 
 	return { sessionRoot, files, sessions, errors };

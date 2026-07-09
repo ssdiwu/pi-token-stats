@@ -6,7 +6,7 @@ import { Type } from "typebox";
 
 import { resolveUiLocale, t } from "./src/locale.ts";
 import { buildInteractiveReport, buildReportForRequest, buildTodayReportFromSessions, localDateString } from "./src/insights.ts";
-import { buildDayReport } from "./src/day-report.ts";
+import { readDaySummary } from "./src/day-cache.ts";
 import { scanSessions } from "./src/session-scan.ts";
 import { InsightsPanel } from "./src/panel.ts";
 import type { UiLocale } from "./src/types.ts";
@@ -41,25 +41,27 @@ async function showDialog(ctx: ExtensionCommandContext | ExtensionContext, title
 }
 
 async function showInsightsPanel(ctx: ExtensionCommandContext | ExtensionContext, locale: UiLocale): Promise<void> {
-	const { sessions } = await scanSessions();
-	const yesterdayDate = new Date();
+	const now = new Date();
+	const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+	const { sessions } = await scanSessions({ modifiedSince: todayStart });
+	const yesterdayDate = new Date(now);
 	yesterdayDate.setDate(yesterdayDate.getDate() - 1);
 	const yesterday = localDateString(yesterdayDate);
 
 	// 第1页：今天的消耗（复用当前已扫描 sessions，避免二次 scan）
-	const numeric = buildTodayReportFromSessions(sessions, locale);
+	const numeric = buildTodayReportFromSessions(sessions, locale, now);
 
-	// 第2页：昨天的日报（缓存命中直接展示，不在面板打开时重复写 Obsidian）
-	let dailyBody = "";
-	try {
-		const { markdown } = await buildDayReport(yesterday, sessions, locale, { ctx });
-		dailyBody = markdown;
-	} catch (error) {
-		const message = error instanceof Error ? error.message : String(error);
-		dailyBody = `昨天日报生成失败：${message}`;
-	}
+	// 第2页：仅预览昨天的缓存日报，避免面板打开时做历史汇总或生成长文。
+	const cachedDaily = await readDaySummary(yesterday);
+	const dailyBody = cachedDaily?.reportMarkdown || t(locale, "dailyPreviewUnavailable");
 
-	await ctx.ui.custom<undefined>((tui, theme, keybindings, done) => new InsightsPanel({ numericTitle: numeric.title, numericBody: numeric.body, dailyTitle: `${yesterday} 会话日报`, dailyBody }, theme, () => done(undefined)), { overlay: true });
+	await ctx.ui.custom<undefined>((tui, theme, keybindings, done) => new InsightsPanel({
+		numericTitle: numeric.title,
+		numericBody: numeric.body,
+		dailyTitle: `${yesterday} 会话日报`,
+		dailyBody,
+		dailyPreviewHint: t(locale, "dailyPreviewHint"),
+	}, theme, () => done(undefined)), { overlay: true });
 }
 
 export default function sessionInsightsExtension(pi: ExtensionAPI) {

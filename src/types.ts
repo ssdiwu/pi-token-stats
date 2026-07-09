@@ -53,6 +53,7 @@ export interface SessionFile extends ParsedSession {
 export interface ScanSessionsOptions {
 	sessionRoot?: string;
 	files?: string[];
+	modifiedSince?: number;
 }
 
 export interface ScanSessionsResult {

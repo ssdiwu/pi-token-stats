@@ -7,11 +7,14 @@ import { matchesKey, truncateToWidth, visibleWidth } from "@earendil-works/pi-tu
 
 export type InsightView = "numeric" | "daily";
 
+const DAILY_PREVIEW_LINES = 12;
+
 export interface PanelData {
 	numericTitle: string;
 	numericBody: string;
 	dailyTitle: string;
 	dailyBody: string;
+	dailyPreviewHint: string;
 }
 
 export class InsightsPanel {
@@ -60,7 +63,11 @@ export class InsightsPanel {
 		lines.push(row(""));
 
 		const body = this.view === "numeric" ? this.data.numericBody : this.data.dailyBody;
-		for (const line of body.split("\n")) {
+		const bodyLines = body.split("\n");
+		const visibleLines = this.view === "daily" && bodyLines.length > DAILY_PREVIEW_LINES
+			? [...bodyLines.slice(0, DAILY_PREVIEW_LINES - 1), this.data.dailyPreviewHint]
+			: bodyLines;
+		for (const line of visibleLines) {
 			lines.push(contentRow(line));
 		}
 
