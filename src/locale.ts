@@ -42,6 +42,8 @@ export const MESSAGES = {
 		healthFacts: "Context: {count} compaction(s), peak {max} tokens before compact",
 		dailyPreviewHint: "… Run /insights daily for the full report",
 		dailyPreviewUnavailable: "No cached daily report. Run /insights daily to generate it.",
+		panelLoading: "Loading session insights…",
+		panelLoadFailed: "Unable to load session insights: {message}",
 	},
 	"zh-CN": {
 		rangeToday: "今天",
@@ -75,6 +77,8 @@ export const MESSAGES = {
 		healthFacts: "上下文：压缩 {count} 次，峰值 {max} token",
 		dailyPreviewHint: "… 完整日报请运行 /insights daily",
 		dailyPreviewUnavailable: "暂无缓存日报。请运行 /insights daily 生成完整日报。",
+		panelLoading: "正在加载会话洞察…",
+		panelLoadFailed: "加载会话洞察失败：{message}",
 	},
 	"zh-TW": {
 		rangeToday: "今天",
@@ -108,6 +112,8 @@ export const MESSAGES = {
 		healthFacts: "上下文：壓縮 {count} 次，峰值 {max} token",
 		dailyPreviewHint: "… 完整日報請執行 /insights daily",
 		dailyPreviewUnavailable: "暫無快取日報。請執行 /insights daily 產生完整日報。",
+		panelLoading: "正在載入會話洞察…",
+		panelLoadFailed: "載入會話洞察失敗：{message}",
 	},
 } as const;
 

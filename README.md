@@ -38,7 +38,7 @@
 
 ## UI 行为
 
-- **TUI 模式**：`/insights` 无参数打开 L2 overlay 交互面板（第 1 页今天消耗 / 第 2 页昨天日报预览，见 ADR 0003）。数字页只扫描今天有写入的 session 文件；日报页只读缓存并限制行数。完整日报请运行 `/insights daily`。带参数（如 `/insights 最近5小时`）走原生 select/input 提问式对话框。
+- **TUI 模式**：`/insights` 无参数会立即打开带加载状态的 L2 overlay 交互面板（第 1 页今天消耗 / 第 2 页昨天日报预览，见 ADR 0003），再异步读取数据。数字页只扫描今天有写入的 session 文件；日报页只读缓存并限制行数。完整日报请运行 `/insights daily`。带参数（如 `/insights 最近5小时`）走原生 select/input 提问式对话框。
 - **非 TUI 模式**（`pi -p` / JSON / RPC）：输出纯文本，方便脚本和测试验证。
 - UI 文案跟随 `pi-di18n` 的当前 locale（语言环境）；内置 `zh-CN`、`zh-TW`、`en`，其他 locale 回退英文。
 - 时间范围解析：先用当前模型理解，失败后回退本地规则解析。

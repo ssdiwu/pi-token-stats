@@ -12,6 +12,7 @@
 - `obsidian-sync.test.ts`：Obsidian 探测与落点
 - `package-manifest.test.ts`：Pi core runtime import 的 peer dependency 声明
 - `panel.test.ts`：日报预览行数上限与完整日报提示
+- `panel-loading.test.ts`：面板先显示加载态、异步完成后重绘，以及关闭后的生命周期保护
 - `session-scan.test.ts`：按修改时间过滤、并发扫描后保持文件顺序与解析错误汇总
 - `report-session-extract.test.ts` / `report-model.test.ts` / `report-ai-summary.test.ts`：日报事实提取、报告模型与 AI prompt 骨架
 

@@ -4,6 +4,7 @@
 
 - `doc/10-需求规格/PRD-pi-session-insights.md`：**当前基准**。research + grill 对齐后落成的需求规格（定位、形态分层、K0~K6 维度、按天 LLM 读写、今日差异、Obsidian 沉淀、测试接缝、Out of Scope）。新功能 / 实施以此为依据。
 - `doc/20-能力参考/01-context-mode会话信息分析参考.md`：对照 context-mode，论证「Pi 原生 JSONL 够丰富、可只读长出 insight 层」并给出三档借鉴分级（设计冲突 / 同思路 / 候选 K1~K6 改造点）。
+- `doc/20-能力参考/02-pi-dusage即时加载面板参考.md`：对照本地 `pi-dusage` 的先挂载 overlay、后异步刷新机制，界定 `/insights` 即时加载面板的可借范围。
 - `README.md`：当前能力（量纲 + 多维分析 + 项目化日报）、`/insights` 命令、统计口径、项目结构、安装与验证。
 - `AGENTS.md`：给 agent 的实现边界（guardrails）、代码边界、验证要求、Out of Scope。
 - `index.ts`：Pi extension 入口，注册 `/insights` 命令 + `insights` tool。

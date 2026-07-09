@@ -40,28 +40,35 @@ async function showDialog(ctx: ExtensionCommandContext | ExtensionContext, title
 	}
 }
 
-async function showInsightsPanel(ctx: ExtensionCommandContext | ExtensionContext, locale: UiLocale): Promise<void> {
-	const now = new Date();
+async function loadInsightsPanelData(locale: UiLocale, now: Date) {
 	const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-	const { sessions } = await scanSessions({ modifiedSince: todayStart });
 	const yesterdayDate = new Date(now);
 	yesterdayDate.setDate(yesterdayDate.getDate() - 1);
 	const yesterday = localDateString(yesterdayDate);
+	const [{ sessions }, cachedDaily] = await Promise.all([
+		scanSessions({ modifiedSince: todayStart }),
+		readDaySummary(yesterday),
+	]);
 
-	// 第1页：今天的消耗（复用当前已扫描 sessions，避免二次 scan）
 	const numeric = buildTodayReportFromSessions(sessions, locale, now);
-
-	// 第2页：仅预览昨天的缓存日报，避免面板打开时做历史汇总或生成长文。
-	const cachedDaily = await readDaySummary(yesterday);
-	const dailyBody = cachedDaily?.reportMarkdown || t(locale, "dailyPreviewUnavailable");
-
-	await ctx.ui.custom<undefined>((tui, theme, keybindings, done) => new InsightsPanel({
+	return {
 		numericTitle: numeric.title,
 		numericBody: numeric.body,
 		dailyTitle: `${yesterday} 会话日报`,
-		dailyBody,
+		dailyBody: cachedDaily?.reportMarkdown || t(locale, "dailyPreviewUnavailable"),
 		dailyPreviewHint: t(locale, "dailyPreviewHint"),
-	}, theme, () => done(undefined)), { overlay: true });
+	};
+}
+
+async function showInsightsPanel(ctx: ExtensionCommandContext | ExtensionContext, locale: UiLocale): Promise<void> {
+	const now = new Date();
+	await ctx.ui.custom<undefined>((tui, theme, keybindings, done) => new InsightsPanel({
+		load: () => loadInsightsPanelData(locale, now),
+		loadingTitle: t(locale, "title", { range: t(locale, "rangeToday") }),
+		loadingBody: t(locale, "panelLoading"),
+		errorTitle: t(locale, "title", { range: t(locale, "rangeToday") }),
+		errorBody: (message) => t(locale, "panelLoadFailed", { message }),
+	}, tui, theme, () => done(undefined)), { overlay: true });
 }
 
 export default function sessionInsightsExtension(pi: ExtensionAPI) {
