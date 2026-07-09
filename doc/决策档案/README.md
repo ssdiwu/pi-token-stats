@@ -7,3 +7,5 @@
 | [0001](./0001-统一使用原生select与input对话框.md) | 统一使用原生 select/input 对话框 | ~~拒绝 overlay，`/tokens` 走原生 select/input~~ **已失效**，被 0003 取代 |
 | [0002](./0002-只读不拦截会话分析边界.md) | 只读不拦截会话分析边界 | 只读 session JSONL，绝不引入 PreToolUse/sandbox；git/decision/delegation 维度越界不做 |
 | [0003](./0003-展示层升级L2overlay面板.md) | 展示层升级 L2 overlay 面板 | `/insights` 用 overlay 面板（数字/日报视图切换），取代 0001 的 select/input |
+| [0004](./0004-自适应默认日报日界.md) | 自适应默认日报日界 | 凌晨归昨天并从昨天 05:00 截至当前，白天归当天自然日 |
+| [0005](./0005-配置化日报归档与模型.md) | 配置化日报归档与模型 | 日报自动写配置目录，模型选择器可配置且失败显式回退 |

@@ -22,7 +22,7 @@ export function dayFilePath(date: string, homeDir = os.homedir()): string {
 export function localDayRange(date: string): TimeRange {
 	const [year, month, day] = date.split("-").map(Number);
 	const since = new Date(year, month - 1, day, 0, 0, 0, 0).getTime();
-	const until = new Date(year, month - 1, day, 23, 59, 59, 999).getTime();
+	const until = new Date(year, month - 1, day + 1, 0, 0, 0, 0).getTime();
 	return { label: date, since, until };
 }
 
@@ -42,9 +42,8 @@ export async function writeDaySummary(summary: DaySummary, homeDir = os.homedir(
 	await fs.writeFile(dayFilePath(summary.date, homeDir), JSON.stringify(summary, null, 2), "utf8");
 }
 
-// 纯算法：按当天范围聚合确定性数据（量纲 + 多维 + 模型），不调 LLM。
-export function buildDayDeterministic(date: string, sessions: SessionFile[]): DaySummary {
-	const range = localDayRange(date);
+// 纯算法：按指定范围聚合确定性数据（量纲 + 多维 + 模型），不调 LLM。
+export function buildDeterministicSummary(date: string, range: TimeRange, sessions: SessionFile[]): DaySummary {
 	const { stats, models, sessions: sessionRollups } = rollupSessions(sessions, range);
 	const dimensions = rollupDimensions(sessions, range);
 	return {
@@ -58,6 +57,10 @@ export function buildDayDeterministic(date: string, sessions: SessionFile[]): Da
 		narrativeSource: "none",
 		generatedAt: new Date().toISOString(),
 	};
+}
+
+export function buildDayDeterministic(date: string, sessions: SessionFile[]): DaySummary {
+	return buildDeterministicSummary(date, localDayRange(date), sessions);
 }
 
 function localDateString(date = new Date()): string {

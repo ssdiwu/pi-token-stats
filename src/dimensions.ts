@@ -9,7 +9,7 @@ import type { ContextHealth, Dimensions, ErrorIntel, ProjectRollup, SessionEntry
 
 function inRange(entry: SessionEntry, range: TimeRange): boolean {
 	const ts = entryTimestamp(entry);
-	return ts >= range.since && ts <= range.until;
+	return ts >= range.since && ts < range.until;
 }
 
 function sessionName(session: SessionFile): string {

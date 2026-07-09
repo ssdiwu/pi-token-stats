@@ -9,6 +9,8 @@ export interface BuildReportModelInput {
 	range?: TimeRange;
 	sessions: ParsedSession[];
 	scanErrors?: ScanError[];
+	projectCurrent?: boolean;
+	currentCwd?: string;
 	now?: Date;
 }
 
@@ -100,8 +102,11 @@ function buildProjects(activities: SessionActivity[]): ProjectSummary[] {
 	}));
 }
 
-export function buildReportModel({ date, range = createDailyTimeRange(date), sessions, scanErrors = [], now = new Date() }: BuildReportModelInput): DailyReportModel {
-	const sessionActivities = filterSessionsByRange(sessions, date, range).map(({ activity }) => activity);
+export function buildReportModel({ date, range = createDailyTimeRange(date), sessions, scanErrors = [], projectCurrent = false, currentCwd = "", now = new Date() }: BuildReportModelInput): DailyReportModel {
+	let sessionActivities = filterSessionsByRange(sessions, date, range).map(({ activity }) => activity);
+	if (projectCurrent && currentCwd) {
+		sessionActivities = sessionActivities.filter((activity) => Boolean(activity.cwd) && path.resolve(activity.cwd) === path.resolve(currentCwd));
+	}
 	const tasks = uniqueByText(sessionActivities.flatMap((activity) => activity.taskNotes), 24);
 	const completed = uniqueByText(sessionActivities.flatMap((activity) => activity.completedNotes), 16);
 	const assistantNotes = uniqueByText(sessionActivities.flatMap((activity) => activity.assistantNotes), 12);

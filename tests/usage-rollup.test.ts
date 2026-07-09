@@ -91,6 +91,22 @@ test("rollupEntries 按时间范围过滤", () => {
 	assert.equal(stats.totalTokens, 0);
 });
 
+test("rollupEntries 优先使用字符串 message.timestamp", () => {
+	const entry = assistantEntry("2026-07-08T09:00:00.000Z", usage(10, 20));
+	entry.timestamp = "2026-07-08T10:00:00.000Z";
+	entry.message!.timestamp = "2026-07-08T09:00:00.000Z";
+	const { stats } = rollupEntries([entry], { label: "message timestamp", since: Date.parse("2026-07-08T08:30:00.000Z"), until: Date.parse("2026-07-08T09:30:00.000Z") });
+	assert.equal(stats.totalTokens, 30);
+});
+
+test("rollupEntries 使用半开区间，不计入 until 整点消息", () => {
+	const range: TimeRange = { label: "boundary", since: Date.parse("2026-07-08T09:00:00.000Z"), until: Date.parse("2026-07-08T09:01:00.000Z") };
+	const { stats } = rollupEntries(sessionA.entries, range);
+	assert.equal(stats.userMessages, 1);
+	assert.equal(stats.assistantMessages, 0);
+	assert.equal(stats.totalTokens, 0);
+});
+
 test("rollupSessions 多会话聚合 + 模型分组", () => {
 	const { stats, models, sessions } = rollupSessions([sessionA, sessionB], dayRange);
 	assert.equal(sessions.length, 2);

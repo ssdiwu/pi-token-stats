@@ -1,5 +1,5 @@
 // pi-session-insights — Pi 会话信息拓展入口。
-// 注册 /insights 命令和 insights tool：量纲聚合 + 多维分析 + 叙事日报 + Obsidian 沉淀 + L2 面板。
+// 注册 /insights 命令和 insights tool：量纲聚合 + 多维分析 + 叙事日报 + 配置化归档 + L2 面板。
 
 import type { ExtensionAPI, ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";

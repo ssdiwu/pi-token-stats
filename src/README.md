@@ -13,6 +13,10 @@
 | `time-range.ts` | `/insights` 时间范围解析 |
 | `format.ts` | 数字视图纯文本渲染 |
 | `insights.ts` | `/insights` 主逻辑：范围洞察、`daily` 子命令 |
+| `daily-options.ts` | 默认/显式日界与多天日期展开 |
+| `daily-config.ts` | `pi-session-insights.json` 的归档目录和模型选择器 |
+| `daily-command.ts` | `/insights daily` 子命令参数与时间范围解析 |
+| `daily-archive.ts` | 配置目录下的稳定日报文件归档 |
 | `day-cache.ts` | 按天缓存：确定性摘要 + 报表 markdown |
 | `day-diff.ts` | 按天差异（趋势 / 新增 / 消失 / 工具变化 / 异常） |
 | `report-session-extract.ts` | 从 session 提取日报事实：任务、完成、阻塞、工具、文件 |
@@ -21,12 +25,12 @@
 | `report-markdown.ts` | AI 不可用时的本地 Markdown fallback |
 | `report-labels.ts` | 日报文案字典（`zh-CN` / `zh-TW` / `en`） |
 | `report-redact.ts` | 日报链路脱敏与截断 |
-| `obsidian-sync.ts` | Obsidian vault 探测与日报落点 |
+| `obsidian-sync.ts` | 遗留 Obsidian 落点工具，不参与默认日报归档 |
 | `panel.ts` | `/insights` L2 overlay 面板 |
 
 ## 当前日报链
 
-`/insights daily` 生成完整日报：
+`/insights daily [日期/自然语言范围]` 生成完整日报并自动归档到配置目录；`--day-start HH:mm` 和 `--project current` 可覆盖默认口径：
 
 1. `session-scan.ts` 扫描本地 session
 2. `report-session-extract.ts` 提取任务 / 完成 / 风险 / 待跟进 / 文件 / 工具事实

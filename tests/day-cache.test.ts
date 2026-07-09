@@ -45,10 +45,10 @@ const sampleSession: SessionFile = {
 	errors: [],
 };
 
-test("localDayRange 当天 00:00 到 23:59:59", () => {
+test("localDayRange 使用次日 00:00 作为半开区间终点", () => {
 	const range = localDayRange(DATE);
 	assert.equal(range.since, new Date(2026, 6, 8, 0, 0, 0, 0).getTime());
-	assert.equal(range.until, new Date(2026, 6, 8, 23, 59, 59, 999).getTime());
+	assert.equal(range.until, new Date(2026, 6, 9, 0, 0, 0, 0).getTime());
 });
 
 test("buildDayDeterministic 纯算法聚合当天量纲与多维", () => {

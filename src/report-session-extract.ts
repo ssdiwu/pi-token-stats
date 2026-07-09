@@ -22,7 +22,7 @@ interface ContentToolCallItem {
 }
 
 function getTimestamp(entry: SessionEntry): Timestamp {
-	return entry?.timestamp || entry?.message?.timestamp || null;
+	return entry?.message?.timestamp || entry?.timestamp || null;
 }
 
 function toDate(timestamp: Timestamp): Date | null {

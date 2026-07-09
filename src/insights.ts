@@ -10,7 +10,9 @@ import { isSessionRange, parseRange, parseRangeRequest, resolveRangeWithLlm } fr
 import { rollupDimensions } from "./dimensions.ts";
 import { buildReport, formatDialogBody } from "./format.ts";
 import { buildDayReport } from "./day-report.ts";
-import { saveDayReportToVault } from "./obsidian-sync.ts";
+import { saveDailyReport } from "./daily-archive.ts";
+import { readDailyConfig, selectDailyModel } from "./daily-config.ts";
+import { isDailyCommand, parseDailyCommand, resolveDailyCommandWindows } from "./daily-command.ts";
 import { scanSessions } from "./session-scan.ts";
 import type { Report, RangeRequest, TimeRange, UiLocale } from "./types.ts";
 
@@ -45,7 +47,7 @@ export async function buildReportForRequest(request: RangeRequest | undefined, c
 export async function buildInteractiveReport(rangeText: string | undefined, ctx: ExtensionCommandContext | ExtensionContext, locale: UiLocale): Promise<Report> {
 	const raw = rangeText?.trim();
 	if (!raw) return buildRangeReport(parseRange(undefined, locale) as TimeRange, locale);
-	if (isDayReportRequest(raw)) return buildDayReportCommand(ctx, locale);
+	if (isDayReportRequest(raw)) return buildDayReportCommand(raw, ctx, locale);
 	if (isSessionRange(raw)) return buildSessionReport(ctx, locale);
 
 	const llmRange = await resolveRangeWithLlm(raw, ctx);
@@ -61,9 +63,7 @@ export function buildTodayReportFromSessions(sessions: Awaited<ReturnType<typeof
 }
 
 export function isDayReportRequest(value: string | undefined): boolean {
-	const raw = value?.trim().toLowerCase();
-	if (!raw) return false;
-	return ["daily", "日报", "日報", "report", "today report"].includes(raw);
+	return isDailyCommand(value) || ["report", "today report"].includes(value?.trim().toLowerCase() || "");
 }
 
 export function localDateString(date = new Date()): string {
@@ -73,20 +73,43 @@ export function localDateString(date = new Date()): string {
 	return `${year}-${month}-${day}`;
 }
 
-async function buildDayReportCommand(ctx: ExtensionCommandContext | ExtensionContext, locale: UiLocale): Promise<Report> {
-	const { sessions } = await scanSessions();
-	const today = localDateString();
-	const { markdown, summary } = await buildDayReport(today, sessions, locale, { ctx });
-
-	// 自动沉淀到 Obsidian：探测 open:true vault，写 <vault>/<子目录>/YYYY-MM-DD.md。
-	let body = markdown;
-	try {
-		const saved = await saveDayReportToVault(today, markdown);
-		body = `${markdown}\n\n---\n已沉淀到 Obsidian：${saved.path}${saved.overwritten ? "（覆盖）" : ""}\n`;
-	} catch (error) {
-		const message = error instanceof Error ? error.message : String(error);
-		body = `${markdown}\n\n---\n⚠️ Obsidian 沉淀失败：${message}\n`;
+async function buildDayReportCommand(raw: string, ctx: ExtensionCommandContext | ExtensionContext, locale: UiLocale): Promise<Report> {
+	const request = parseDailyCommand(raw);
+	const selections = await resolveDailyCommandWindows(request, ctx, locale);
+	if (selections.length > 1 && ctx.hasUI) {
+		const dates = selections.map((selection) => selection.date).join("、");
+		const confirmed = await (ctx.ui as any).confirm("确认补写日报？", `将生成并归档 ${selections.length} 篇日报：${dates}`);
+		if (!confirmed) throw new Error("daily report batch cancelled");
 	}
 
-	return { title: `${today} 会话日报`, body, stats: summary.stats, sessions: [], models: summary.models };
+	const config = await readDailyConfig();
+	const modelSelection = selectDailyModel(ctx.modelRegistry.getAvailable(), ctx.model, config.dailyModel);
+	const { sessions } = await scanSessions();
+	const results: Array<{ date: string; markdown: string; summary: Awaited<ReturnType<typeof buildDayReport>>["summary"]; errors: string[]; savedPath?: string }> = [];
+	for (const selection of selections) {
+		const result = await buildDayReport(selection.date, sessions, locale, {
+			ctx,
+			range: selection.range,
+			forceRefresh: true,
+			projectCurrent: request.projectCurrent,
+			currentCwd: ctx.cwd,
+			ai: { model: modelSelection.model, thinking: modelSelection.thinking, notice: modelSelection.notice, fallbackModel: ctx.model },
+		});
+		const saved = await saveDailyReport(selection.date, result.markdown, config.outputDir);
+		results.push({ date: selection.date, markdown: result.markdown, summary: result.summary, errors: result.errors, savedPath: saved.path });
+	}
+
+	const first = results[0];
+	const notices = [...new Set(results.flatMap((result) => result.errors).filter(Boolean))];
+	if (results.length === 1) {
+		const result = first;
+		const body = `${result.markdown}\n\n---\n已归档：${result.savedPath}${notices.length > 0 ? `\n⚠️ ${notices.join("；")}` : ""}\n`;
+		return { title: `${result.date} 会话日报`, body, stats: result.summary.stats, sessions: [], models: result.summary.models };
+	}
+	const body = [
+		`已生成并归档 ${results.length} 篇日报：`,
+		...results.map((result) => `- ${result.date}：${result.savedPath}`),
+		...(notices.length > 0 ? ["", `⚠️ ${notices.join("；")}`] : []),
+	].join("\n");
+	return { title: "多天会话日报", body, stats: first.summary.stats, sessions: [], models: first.summary.models };
 }

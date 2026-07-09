@@ -11,14 +11,14 @@ Pi 已经把每次会话的结构化事件完整写进本地 session JSONL（cwd
 - 想看"今天做了什么"得另开 pi-daily，两个包各管一摊，量纲统计和活动叙事割裂。
 - 竞品（context-mode / `@observal/pi-insights` 等）要么靠拦截工具调用获取深度（对 Pi 是冗余开销，因为 Pi 原生日志已足够丰富），要么只做 usage 统计、不做叙事。
 
-用户（507）需要一个**只读、不拦截**的 Pi 会话信息拓展包：把 Pi 已经写好的会话日志，变成一层多维分析聚合 + 叙事日报，并能把日报自动沉淀进个人知识库长期积累。
+用户（507）需要一个**只读、不拦截**的 Pi 会话信息拓展包：把 Pi 已经写好的会话日志，变成一层多维分析聚合 + 叙事日报，并能把日报自动归档到可配置目录长期积累。
 
 ## Solution
 
 新包 `pi-session-insights`，单入口命令 `/insights`，在 Pi 原生 TUI 内开一个交互面板（L2 overlay），面板内分视图承载"会话信息"的两类产物：
 
 - **数字视图**（即时、纯算法）：量纲 / 项目排行 / 工具画像 / 错误情报 / 上下文健康。对标竞品的 usage insights，但走轻量纯算法路线，不烧 LLM。
-- **日报视图**（叙事、过 LLM）：基于按天摘要生成的当日工作叙事，尾部带"今日差异"段，并自动沉淀到 Obsidian 知识库。
+- **日报视图**（叙事、过 LLM）：基于按天摘要生成的当日工作叙事，尾部带"今日差异"段，并自动归档到配置目录。
 
 关键立论（已用本机真实会话文件核验）：Pi 原生 session JSONL 足够丰富，能靠"只读 JSONL"达到竞品靠拦截才能拿到的大部分分析维度，无需 context-mode 那套拦截税。
 
@@ -27,7 +27,7 @@ Pi 已经把每次会话的结构化事件完整写进本地 session JSONL（cwd
 1. 作为 Pi 用户，我想在终端内一个入口看到会话消耗集中在哪里，这样我能定位高成本项目 / 工具 / 工作流，而不只是看一个总 token 数。
 2. 作为 Pi 用户，我想看到当日工作叙事日报（做了什么 / 产出 / 阻塞 / 待跟进），这样我能回顾和汇报。
 3. 作为 Pi 用户，我想看日报尾部"今日差异"（和近 N 天比，消耗趋势 / 新增项目 / 消失项目 / 工具画像变化 / 异常点），这样每篇日报有增量、不千篇一律。
-4. 作为 Obsidian 用户，我想让生成的日报自动沉淀进我的知识库 vault，这样日报能被检索、双链、长期积累。
+4. 作为日报使用者，我想让生成的日报自动归档到可配置目录，这样可稳定重跑、检索和补写。
 5. 作为已使用 pi-daily 的用户，我希望平滑迁移——daily 暂时保留兼容，新包是它的超集，最终吸收其能力。
 6. 作为关心成本的用户，我想让分析层尽量少烧 token——数字切片即开即看不调 LLM，只有日报生成才用 LLM，且按天读写避免一次性吞超量会话原文。
 
@@ -70,12 +70,12 @@ Pi session JSONL 已原生支持，纯算法可算（已在真实会话文件核
 - 纯算法 diff，读"今天天摘要 + 近 N 天天摘要"算：消耗趋势（↑/↓/持平）、新增项目、消失项目、工具画像变化、异常点。
 - 不额外烧 LLM。
 
-### Obsidian 自动沉淀
+### 配置化自动归档
 
-- 自动读 `~/Library/Application Support/obsidian/obsidian.json` 注册表，取 `open:true` 的 vault 作为默认落点（当前核验为 `/Users/diwu/Workspace/Write/Content`）。
-- 多 vault 或无注册表时，回退用户配置。
-- 日报写到 `<vault>/<子目录>/YYYY-MM-DD.md`，同日重跑幂等覆盖。
-- **不硬编码本地路径**（不继承 pi-daily 的 `~/Documents/pi-daily-reports/` 默认值）。
+- 配置文件固定为 `~/.pi/agent/pi-session-insights.json`；不保存 API Key。
+- 日报默认自动写入 `reportOutputDir`；未配置时使用 `~/Documents/pi-daily-reports`。
+- 单日与多天补写均按 `YYYY-MM-DD.md` 写入，同日重跑幂等覆盖。
+- `dailyModel` 采用 `provider/model-id:thinking` 选择器；不可用时显式回退当前会话模型。
 
 ### 展示层技术
 
@@ -93,11 +93,11 @@ Pi session JSONL 已原生支持，纯算法可算（已在真实会话文件核
 
 - **数据层单元测试（主力）**：Node 内置 test，手造 session JSONL 样本输入，测公开聚合函数（K0~K6 / 今日差异 diff）。纯函数不 mock 系统。先例：pi-daily `tests/report.test.ts`、`session-extract.test.ts`。
 - **按天缓存层**：`day-*.json` 读写幂等、缺失天补跑、跨天聚合读摘要不碰原文。
-- **Obsidian 落点**：临时 vault 目录 + mock `obsidian.json` 注册表 → 验证落点路径、文件名、同日幂等覆盖。
+- **日报归档**：临时配置目录 + mock 配置文件 → 验证默认目录、配置覆盖、文件名、同日幂等覆盖。
 - **命令端到端**：`pi -p "/insights ..."` print 模式纯文本输出（非 TUI 退化为文本）。先例：pi-token-stats 验证接缝。
 - **LLM 层**：只测回退规则路径（按天摘要生成、日报生成的规则版），真 LLM 调用手测。先例：pi-daily `ai-summary.test.ts`。
 - **TUI 面板交互**：不自动化（print 模式无法覆盖键盘交互），手测。
-- 测试看外部行为不看实现细节；mock 只放系统边界（LLM、文件系统、Obsidian 注册表）。
+- 测试看外部行为不看实现细节；mock 只放系统边界（LLM、文件系统、日报配置）。
 - TS 源码直接 import `.ts` 跑 Node test，不走编译（沿用 pi-daily 风格）。
 
 ## Out of Scope
@@ -106,7 +106,7 @@ Pi session JSONL 已原生支持，纯算法可算（已在真实会话文件核
 - 不做 composite score（0-100 评分）——健康度只做事实陈述（"压缩 3 次丢 X token"），不出分数。
 - 不做 L3 常驻实时条（首版）。
 - 不做 git / decision / delegation 维度（Pi JSONL 不记录，需拦截才能拿，越界）。
-- 不硬编码用户本地路径偏好（vault 子目录、缓存目录都走配置 / 探测，不写死）。
+- 不保存 API Key；日报归档目录仅通过用户配置或约定默认值解析。
 
 ## Further Notes
 
@@ -114,7 +114,7 @@ Pi session JSONL 已原生支持，纯算法可算（已在真实会话文件核
 - **风险：按天 LLM 读写仍烧当前会话 model**。虽轻量于 observal，但日报生成 + 天摘要生成仍有 token 成本。需在面板内明确提示"生成日报会花 token"。
 - **开放问题**（落规格 / 实施阶段定，不在本 PRD 拍）：
   - 按天摘要缓存的具体 schema 与目录路径（骨架 `~/.pi/agent/session-insights/day-YYYY-MM-DD.json`）。
-  - Obsidian 落点的子目录名、文件名格式细节。
+  - 多天范围日报的确认交互和批量结果展示细节。
   - L2 面板的视图切换交互细节（键位、视图列表）。
   - README / AGENTS / doc 内 `pi-token-stats` 字样的全面更新。
 - **决策档案待补**：够格进 `doc/决策档案/` 的至少两条——①只读不拦截的能力边界（含 git/decision/delegation 硬边界）；②旧 ADR 0001 失效、展示层升级到 overlay 面板的转变。实施时按需沉淀。

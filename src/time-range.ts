@@ -55,7 +55,7 @@ export function parseRange(input: string | undefined, locale: UiLocale, now = ne
 	if (["yesterday", "昨天"].includes(raw)) {
 		const start = new Date(todayStart);
 		start.setDate(start.getDate() - 1);
-		return { label: t(locale, "rangeYesterday"), since: start.getTime(), until: todayStart.getTime() - 1 };
+		return { label: t(locale, "rangeYesterday"), since: start.getTime(), until: todayStart.getTime() };
 	}
 
 	const namedRange = parseNamedRange(rawInput, locale, now);
@@ -77,7 +77,7 @@ export function parseRange(input: string | undefined, locale: UiLocale, now = ne
 		const start = parseLocalDate(absolute[1]);
 		const end = absolute[2] ? parseLocalDate(absolute[2]) : new Date(start);
 		end.setDate(end.getDate() + 1);
-		return { label: absolute[2] ? `${normalizeDateLabel(absolute[1])} ~ ${normalizeDateLabel(absolute[2])}` : normalizeDateLabel(absolute[1]), since: start.getTime(), until: end.getTime() - 1 };
+		return { label: absolute[2] ? `${normalizeDateLabel(absolute[1])} ~ ${normalizeDateLabel(absolute[2])}` : normalizeDateLabel(absolute[1]), since: start.getTime(), until: end.getTime() };
 	}
 
 	return { label: t(locale, "rangeFallback", { input: rawInput || "default" }), since: todayStart.getTime(), until: now.getTime() };
@@ -100,7 +100,7 @@ function parseRangeBoundary(input: string, side: "start" | "end", locale: UiLoca
 	const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 	const yesterdayStart = new Date(todayStart);
 	yesterdayStart.setDate(yesterdayStart.getDate() - 1);
-	const yesterdayEnd = new Date(todayStart.getTime() - 1);
+	const yesterdayEnd = new Date(todayStart);
 
 	if (["today", "今天", "當天", "当天"].includes(normalized)) {
 		return { label: t(locale, "rangeToday"), timestamp: side === "start" ? todayStart.getTime() : now.getTime() };
@@ -116,7 +116,7 @@ function parseRangeBoundary(input: string, side: "start" | "end", locale: UiLoca
 		if (side === "start") return { label: normalizeDateLabel(raw), timestamp: date.getTime() };
 		const end = new Date(date);
 		end.setDate(end.getDate() + 1);
-		return { label: normalizeDateLabel(raw), timestamp: end.getTime() - 1 };
+		return { label: normalizeDateLabel(raw), timestamp: end.getTime() };
 	}
 
 	return undefined;
@@ -190,7 +190,7 @@ function buildRangeParsePrompt(input: string, now: Date): string {
 		"Rules:",
 		"- Interpret relative dates in local time.",
 		"- If the user ends a range with 今天 / today / 现在 / now / 当前, use the current moment, not end-of-day.",
-		"- If the user gives a plain date as the end of a date range, use 23:59:59 of that date.",
+		"- If the user gives a plain date as the end of a date range, use 00:00:00 of the following date as the exclusive end.",
 		"- Keep label concise and faithful to the user's intent.",
 		"- If the user asks for the current session, return kind=session.",
 		`User input: ${input}`,

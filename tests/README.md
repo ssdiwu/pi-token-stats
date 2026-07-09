@@ -6,6 +6,10 @@
 
 - `usage-rollup.test.ts`：K0 消耗量纲
 - `dimensions.test.ts`：K1/K2/K3/K5 多维聚合
+- `daily-options.test.ts`：日报自适应日界、显式日界与多天日期展开
+- `daily-command.test.ts`：`/insights daily` 参数校验、日界与日期范围展开
+- `daily-config.test.ts`：日报目录默认值、模型选择器与模型回退
+- `daily-archive.test.ts`：配置文件读取与同日期稳定归档覆盖
 - `day-cache.test.ts`：按天摘要缓存 / narrative 缓存行为
 - `day-report.test.ts`：历史日报 markdown 缓存命中行为
 - `day-diff.test.ts`：按天差异算法与渲染

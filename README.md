@@ -2,7 +2,7 @@
 
 `pi-session-insights` 是一个 Pi extension（扩展）包，做**只读的 Pi 会话信息拓展**：从本地 session JSONL 聚合会话消耗与活动，提供多维分析 + 项目化日报。
 
-> 当前进度：已实现 K0 量纲 + 多维分析（K1/K2/K3/K5）+ 按天摘要缓存 + 项目化日报（复用 pi-daily 日报链，含按天差异）+ Obsidian 自动沉淀 + L2 交互面板。详见 `doc/10-需求规格/PRD-pi-session-insights.md`。
+> 当前进度：已实现 K0 量纲 + 多维分析（K1/K2/K3/K5）+ 按天摘要缓存 + 项目化日报（复用 pi-daily 日报链，含按天差异）+ 配置化自动归档 + L2 交互面板。详见 `doc/10-需求规格/PRD-pi-session-insights.md`。
 
 ## 定位
 
@@ -32,7 +32,7 @@
 /insights daily（生成当日项目化日报，含按天差异）
 ```
 
-运行 `/insights daily` 会**自动沉淀到 Obsidian**：读 `~/Library/Application Support/obsidian/obsidian.json` 取 `open:true` vault，写 `<vault>/会话日报/YYYY-MM-DD.md`，同日重跑幂等覆盖。无 vault 时日报照常生成并提示沉淀失败。
+运行 `/insights daily` 会自动归档到 `~/.pi/agent/pi-session-insights.json` 的 `reportOutputDir`；未配置时写 `~/Documents/pi-daily-reports/YYYY-MM-DD.md`，同日重跑幂等覆盖。`dailyModel` 可选用 `provider/model-id:thinking` 指定日报模型；不可用时会提示并回退当前会话模型。
 
 同时注册 `insights` tool（工具），agent 可以在自然语言对话中调用。例如你问"最近 5 小时 token 花了多少？"时，agent 应优先把已理解好的绝对 `since/until` 时间范围传给工具；若没有结构化范围，也可退回传原始时间表达。
 
@@ -80,6 +80,10 @@ pi-session-insights/
 │   ├── time-range.ts       # 时间范围解析（parseRange + LLM 解析）
 │   ├── format.ts           # 格式化与渲染（print 模式纯文本）
 │   ├── insights.ts         # 命令主逻辑（组装扫描 → 聚合 → 渲染）
+│   ├── daily-command.ts    # /insights daily 子命令解析与多天日期展开
+│   ├── daily-options.ts    # 默认/显式日界
+│   ├── daily-config.ts     # 日报配置与模型选择器
+│   ├── daily-archive.ts    # 配置目录稳定归档
 │   ├── day-cache.ts        # 按天摘要缓存（day-*.json 读写幂等 + 增量补跑）
 │   ├── day-summary.ts      # 旧按天叙事生成链（历史兼容，逐步淡出）
 │   ├── day-report.ts       # 日报组装：接日报生成链 + 差异 + 缓存

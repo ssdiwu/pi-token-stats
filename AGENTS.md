@@ -6,9 +6,9 @@
 
 ## 先读（按顺序）
 
-1. `doc/10-需求规格/PRD-pi-session-insights.md`：**当前基准**。需求规格、形态分层、K0~K6 维度、按天 LLM 读写、今日差异、Obsidian 沉淀、测试接缝、Out of Scope。
+1. `doc/10-需求规格/PRD-pi-session-insights.md`：**当前基准**。需求规格、形态分层、K0~K6 维度、按天 LLM 读写、今日差异、配置化日报归档、测试接缝、Out of Scope。
 2. `doc/20-能力参考/01-context-mode会话信息分析参考.md`：调研参考，三档借鉴分级（设计冲突/同思路/候选）。
-3. `README.md`：当前能力（量纲 + 多维分析 + 项目化日报 + Obsidian 沉淀 + L2 面板）、命令、统计口径、安装与验证。
+3. `README.md`：当前能力（量纲 + 多维分析 + 项目化日报 + 配置化归档 + L2 面板）、命令、统计口径、安装与验证。
 4. `src/` 各模块 `README`（如有）或模块顶部注释。
 
 ## 项目结构
@@ -35,7 +35,8 @@ pi-session-insights/
 │   ├── report-markdown.ts # AI 失败时的本地 Markdown fallback
 │   ├── report-labels.ts  # 日报文案字典
 │   ├── report-redact.ts  # 日报脱敏与截断
-│   ├── obsidian-sync.ts  # Obsidian vault 探测 + 日报落点（幂等覆盖）
+│   ├── daily-*.ts        # 日报参数、配置与配置目录归档
+│   ├── obsidian-sync.ts  # 遗留 Obsidian 落点工具，不参与默认日报归档
 │   └── panel.ts          # L2 overlay 交互面板（今天消耗/昨天日报切换）
 ├── tests/                # Node 内置 test（TS 直接 import .ts，不走编译）
 ├── doc/                  # 需求规格、调研参考、决策档案

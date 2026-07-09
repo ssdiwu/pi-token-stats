@@ -14,8 +14,12 @@ function countToolCalls(content: unknown): number {
 }
 
 export function entryTimestamp(entry: SessionEntry): number {
-	const messageTimestamp = asNumber(entry?.message?.timestamp);
-	if (messageTimestamp > 0) return messageTimestamp;
+	const messageTimestamp = entry?.message?.timestamp;
+	if (typeof messageTimestamp === "number" && Number.isFinite(messageTimestamp) && messageTimestamp > 0) return messageTimestamp;
+	if (messageTimestamp) {
+		const parsedMessageTimestamp = new Date(messageTimestamp).getTime();
+		if (Number.isFinite(parsedMessageTimestamp)) return parsedMessageTimestamp;
+	}
 
 	const timestamp = Date.parse((entry?.timestamp as string) ?? "");
 	return Number.isFinite(timestamp) ? timestamp : 0;
@@ -126,7 +130,7 @@ export function rollupEntries(entries: SessionEntry[], range?: TimeRange): { sta
 	const models = new Map<string, ModelRollup>();
 	for (const entry of entries) {
 		const timestamp = entryTimestamp(entry);
-		if (!range || (timestamp >= range.since && timestamp <= range.until)) addMessageEntry(stats, entry, models);
+		if (!range || (timestamp >= range.since && timestamp < range.until)) addMessageEntry(stats, entry, models);
 	}
 	return { stats, models: sortedModels(models) };
 }

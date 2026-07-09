@@ -40,6 +40,13 @@ test("buildReportModel aggregates target date activity", () => {
 	assert.equal(report.range.label, createDailyTimeRange("2026-06-12").label);
 });
 
+test("buildReportModel 的当前项目筛选同时收敛正文统计", () => {
+	const report = buildReportModel({ date: "2026-06-12", sessions: [sessionA, sessionB], projectCurrent: true, currentCwd: "/repo/pi-session-insights" });
+	assert.equal(report.stats.sessionCount, 1);
+	assert.equal(report.stats.projectCount, 1);
+	assert.equal(report.projects[0].projectName, "pi-session-insights");
+});
+
 test("renderMarkdownReport renders expected sections in zh-CN", () => {
 	const report = buildReportModel({ date: "2026-06-12", sessions: [sessionA, sessionB] });
 	const markdown = renderMarkdownReport(report, "zh-CN");
