@@ -1,41 +1,47 @@
 {
-  "name": "pi-token-stats",
-  "version": "0.1.0",
-  "description": "Pi extension package for token usage statistics with native select/input dialogs.",
-  "type": "module",
-  "keywords": [
-    "pi-package",
-    "pi",
-    "extension",
-    "token",
-    "stats",
-    "session"
-  ],
-  "license": "MIT",
-  "author": "diwu",
-  "files": [
-    "index.ts",
-    "README.md",
-    "doc"
-  ],
-  "scripts": {
-    "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck"
-  },
-  "peerDependencies": {
-    "@earendil-works/pi-ai": "*",
-    "@earendil-works/pi-coding-agent": "*",
-    "typebox": "*"
-  },
-  "devDependencies": {
-    "@earendil-works/pi-coding-agent": "^0.79.10",
-    "@types/node": "^22.19.15",
-    "typescript": "^5.9.3",
-    "typebox": "^1.1.38"
-  },
-  "pi": {
-    "extensions": [
-      "./index.ts"
-    ]
-  }
+	"name": "pi-session-insights",
+	"version": "0.1.0",
+	"description": "Pi extension for session information insights — usage, projects, tools, errors, health, and daily narrative.",
+	"type": "module",
+	"keywords": [
+		"pi-package",
+		"pi",
+		"extension",
+		"session",
+		"insights",
+		"usage",
+		"daily-report"
+	],
+	"license": "MIT",
+	"author": "diwu",
+	"files": [
+		"index.ts",
+		"src/",
+		"README.md",
+		"doc"
+	],
+	"scripts": {
+		"typecheck": "tsc --noEmit",
+		"test": "node --test --import tsx tests/*.test.ts",
+		"check": "npm run typecheck && npm test"
+	},
+	"peerDependencies": {
+		"@earendil-works/pi-ai": "*",
+		"@earendil-works/pi-coding-agent": "*",
+		"@earendil-works/pi-tui": "*",
+		"typebox": "*"
+	},
+	"devDependencies": {
+		"@earendil-works/pi-coding-agent": "^0.79.10",
+		"@earendil-works/pi-tui": "^0.79.10",
+		"@types/node": "^22.19.15",
+		"tsx": "^4.23.0",
+		"typebox": "^1.1.38",
+		"typescript": "^5.9.3"
+	},
+	"pi": {
+		"extensions": [
+			"./index.ts"
+		]
+	}
 }

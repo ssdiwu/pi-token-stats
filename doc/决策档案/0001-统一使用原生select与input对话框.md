@@ -2,7 +2,9 @@
 
 ## 状态
 
-Accepted
+**Superseded** — 已被 [0003-展示层升级L2overlay面板.md](./0003-展示层升级L2overlay面板.md) 取代。
+
+> 原状态（pi-token-stats 时代）：Accepted。pi-session-insights 升级到 L2 overlay 面板后，本 ADR 的“只用 select/input、拒绝 overlay”失效。
 
 ## 背景
 
