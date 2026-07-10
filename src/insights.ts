@@ -17,6 +17,20 @@ import { isDailyCommand, parseDailyCommand, resolveDailyCommandWindows } from ".
 import { scanSessions } from "./session-scan.ts";
 import type { Report, RangeRequest, TimeRange, UiLocale } from "./types.ts";
 
+function dailyUi(locale: UiLocale): { archived: string; batchTitle: string; batchGenerated: string } {
+	const translated: Partial<Record<UiLocale, { archived: string; batchTitle: string; batchGenerated: string }>> = {
+		ja: { archived: "保存済み", batchTitle: "複数日のセッションレポート", batchGenerated: "生成して保存した日報：" },
+		ko: { archived: "보관됨", batchTitle: "여러 날의 세션 보고서", batchGenerated: "생성 및 보관된 일일 보고서:" },
+		de: { archived: "Archiviert", batchTitle: "Mehrere Sitzungsberichte", batchGenerated: "Erstellte und archivierte Tagesberichte:" },
+		fr: { archived: "Archivé", batchTitle: "Rapports de session sur plusieurs jours", batchGenerated: "Rapports quotidiens générés et archivés :" },
+		es: { archived: "Archivado", batchTitle: "Informes de sesión de varios días", batchGenerated: "Informes diarios generados y archivados:" },
+		pt: { archived: "Arquivado", batchTitle: "Relatórios de sessão de vários dias", batchGenerated: "Relatórios diários gerados e arquivados:" },
+		ru: { archived: "Архивировано", batchTitle: "Отчёты о сеансах за несколько дней", batchGenerated: "Созданные и архивированные ежедневные отчёты:" },
+		ar: { archived: "مؤرشف", batchTitle: "تقارير الجلسات لعدة أيام", batchGenerated: "التقارير اليومية التي تم إنشاؤها وأرشفتها:" },
+	};
+	return translated[locale] ?? { archived: t(locale, "dailyArchived"), batchTitle: t(locale, "dailyBatchTitle"), batchGenerated: t(locale, "dailyBatchGenerated") };
+}
+
 function buildRangeReportFromSessions(sessions: Awaited<ReturnType<typeof scanSessions>>["sessions"], range: TimeRange, locale: UiLocale): Report {
 	const { stats, models, sessions: sessionRollups } = rollupSessions(sessions, range);
 	const dimensions = rollupDimensions(sessions, range);
@@ -105,16 +119,17 @@ async function buildDayReportCommand(raw: string, ctx: ExtensionCommandContext |
 	const notices = [...new Set(results.flatMap((result) => result.errors).filter(Boolean))];
 	if (results.length === 1) {
 		const result = first;
+		const ui = dailyUi(locale);
 		const archived = locale === "en" || locale === "zh-CN" || locale === "zh-TW"
 			? t(locale, "dailyArchived", { path: result.savedPath || "" })
-			: `${reportLabelsFor(locale).filesAndTools}: ${result.savedPath || ""}`;
+			: `${ui.archived}: ${result.savedPath || ""}`;
 		const body = `${result.markdown}\n\n---\n${archived}${notices.length > 0 ? `\n⚠️ ${notices.join("；")}` : ""}\n`;
 		return { title: reportLabelsFor(locale).reportTitle(result.date), body, stats: result.summary.stats, sessions: [], models: result.summary.models };
 	}
 	const body = [
-		t(locale, "dailyBatchGenerated", { count: results.length }),
+		locale === "en" || locale === "zh-CN" || locale === "zh-TW" ? t(locale, "dailyBatchGenerated", { count: results.length }) : dailyUi(locale).batchGenerated,
 		...results.map((result) => `- ${result.date}：${result.savedPath}`),
 		...(notices.length > 0 ? ["", `⚠️ ${notices.join("；")}`] : []),
 	].join("\n");
-	return { title: t(locale, "dailyBatchTitle"), body, stats: first.summary.stats, sessions: [], models: first.summary.models };
+	return { title: locale === "en" || locale === "zh-CN" || locale === "zh-TW" ? t(locale, "dailyBatchTitle") : dailyUi(locale).batchTitle, body, stats: first.summary.stats, sessions: [], models: first.summary.models };
 }
