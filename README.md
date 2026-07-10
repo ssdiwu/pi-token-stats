@@ -2,7 +2,7 @@
 
 `pi-session-insights` 是一个 Pi extension（扩展）包，做**只读的 Pi 会话信息拓展**：从本地 session JSONL 聚合会话消耗与活动，提供多维分析 + 项目化日报。
 
-> 当前进度：已实现 K0 量纲 + 多维分析（K1/K2/K3/K5）+ 按天摘要缓存 + 项目化日报（复用 pi-daily 日报链，含按天差异）+ 配置化自动归档 + L2 交互面板。详见 `doc/10-需求规格/PRD-pi-session-insights.md`。
+> 当前进度：已实现 K0 量纲 + 多维分析（K1/K2/K3/K5）+ 按天摘要缓存 + 项目化日报（复用 pi-daily 日报链）+ 配置化自动归档 + L2 交互面板。详见 `doc/10-需求规格/PRD-pi-session-insights.md`。
 
 ## 定位
 
@@ -29,7 +29,7 @@
 /insights 2026-06-17
 /insights 2026-06-10 到 2026-06-17
 /insights 当前会话
-/insights daily（生成当日项目化日报，含按天差异）
+/insights daily（生成当日项目化日报）
 ```
 
 运行 `/insights daily` 会自动归档到 `~/.pi/agent/pi-session-insights.json` 的 `reportOutputDir`；未配置时写 `~/Documents/pi-daily-reports/YYYY-MM-DD.md`，同日重跑幂等覆盖。`dailyModel` 可选用 `provider/model-id:thinking` 指定日报模型；不可用时会提示并回退当前会话模型，当前模型也不可用时使用本地 Markdown fallback。
