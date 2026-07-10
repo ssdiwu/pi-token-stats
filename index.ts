@@ -5,6 +5,7 @@ import type { ExtensionAPI, ExtensionCommandContext, ExtensionContext } from "@e
 import { Type } from "typebox";
 
 import { resolveUiLocale, t } from "./src/locale.ts";
+import { reportLabelsFor } from "./src/report-labels.ts";
 import { buildInteractiveReport, buildReportForRequest, buildTodayReportFromSessions, localDateString } from "./src/insights.ts";
 import { readDaySummary } from "./src/day-cache.ts";
 import { scanSessions } from "./src/session-scan.ts";
@@ -54,7 +55,7 @@ async function loadInsightsPanelData(locale: UiLocale, now: Date) {
 	return {
 		numericTitle: numeric.title,
 		numericBody: numeric.body,
-		dailyTitle: `${yesterday} 会话日报`,
+		dailyTitle: reportLabelsFor(locale).reportTitle(yesterday),
 		dailyBody: cachedDaily?.reportMarkdown || t(locale, "dailyPreviewUnavailable"),
 		dailyPreviewHint: t(locale, "dailyPreviewHint"),
 	};
