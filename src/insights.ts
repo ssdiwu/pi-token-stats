@@ -104,8 +104,8 @@ async function buildDayReportCommand(raw: string, ctx: ExtensionCommandContext |
 	const notices = [...new Set(results.flatMap((result) => result.errors).filter(Boolean))];
 	if (results.length === 1) {
 		const result = first;
-		const body = `${result.markdown}\n\n---\n已归档：${result.savedPath}${notices.length > 0 ? `\n⚠️ ${notices.join("；")}` : ""}\n`;
-		return { title: `${result.date} 会话日报`, body, stats: result.summary.stats, sessions: [], models: result.summary.models };
+		const body = `${result.markdown}\n\n---\n${t(locale, "dailyArchived", { path: result.savedPath || "" })}${notices.length > 0 ? `\n⚠️ ${notices.join("；")}` : ""}\n`;
+		return { title: t(locale, "dailyReportTitle", { date: result.date }), body, stats: result.summary.stats, sessions: [], models: result.summary.models };
 	}
 	const body = [
 		t(locale, "dailyBatchGenerated", { count: results.length }),

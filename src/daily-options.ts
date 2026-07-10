@@ -58,6 +58,8 @@ export function resolveExplicitDayStartWindow(now: Date, dayStart: string): Dail
 	return { date: localDateString(reportDay), range: makeRange(start, now) };
 }
 
+const MAX_DAILY_REPORTS = 31;
+
 export function expandDailyDateRange(startDate: string, endDate: string): string[] {
 	const parse = (value: string): Date => {
 		const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -77,6 +79,7 @@ export function expandDailyDateRange(startDate: string, endDate: string): string
 
 	const dates: string[] = [];
 	for (let cursor = start; cursor <= end; cursor = addLocalDays(cursor, 1)) {
+		if (dates.length >= MAX_DAILY_REPORTS) throw new Error(`daily report range exceeds ${MAX_DAILY_REPORTS} days`);
 		dates.push(localDateString(cursor));
 	}
 	return dates;

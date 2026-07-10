@@ -49,6 +49,8 @@ export const MESSAGES = {
 		dailyBatchCancelled: "Daily report batch cancelled. No files were generated or archived.",
 		dailyBatchTitle: "Multi-day session reports",
 		dailyBatchGenerated: "Generated and archived {count} daily report(s):",
+		dailyReportTitle: "Session report for {date}",
+		dailyArchived: "Archived: {path}",
 	},
 	"zh-CN": {
 		rangeToday: "今天",
@@ -89,6 +91,8 @@ export const MESSAGES = {
 		dailyBatchCancelled: "已取消日报补写，未生成或归档文件。",
 		dailyBatchTitle: "多天会话日报",
 		dailyBatchGenerated: "已生成并归档 {count} 篇日报：",
+		dailyReportTitle: "{date} 会话日报",
+		dailyArchived: "已归档：{path}",
 	},
 	"zh-TW": {
 		rangeToday: "今天",
@@ -129,6 +133,8 @@ export const MESSAGES = {
 		dailyBatchCancelled: "已取消日報補寫，未產生或歸檔檔案。",
 		dailyBatchTitle: "多天會話日報",
 		dailyBatchGenerated: "已產生並歸檔 {count} 篇日報：",
+		dailyReportTitle: "{date} 會話日報",
+		dailyArchived: "已歸檔：{path}",
 	},
 } as const;
 
