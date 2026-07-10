@@ -175,7 +175,9 @@ function buildSummaryPrompt(report: DailyReportModel, maxItems = MAX_ITEMS_PER_S
 	].join("\n\n");
 }
 
-async function callCurrentModel(model: any, promptText: string, ctx: ExtensionCommandContext | ExtensionContext, thinking?: string): Promise<string> {
+export type SummaryModelCaller = (model: any, promptText: string, ctx: ExtensionCommandContext | ExtensionContext, thinking?: string) => Promise<string>;
+
+const callCurrentModel: SummaryModelCaller = async (model, promptText, ctx, thinking) => {
 	if (!model) throw new Error("current session model is not available");
 	const auth = await ctx.modelRegistry.getApiKeyAndHeaders(model);
 	if (!auth?.ok) throw new Error(`auth not ok: ${auth?.error || "unknown"}`);
@@ -194,7 +196,7 @@ async function callCurrentModel(model: any, promptText: string, ctx: ExtensionCo
 	} finally {
 		clearTimeout(timeoutId);
 	}
-}
+};
 
 export interface AISummaryOptions {
 	model?: unknown;
@@ -203,12 +205,12 @@ export interface AISummaryOptions {
 	fallbackModel?: unknown;
 }
 
-export async function summarizeReportWithAI(report: DailyReportModel, ctx: ExtensionCommandContext | ExtensionContext, locale: UiLocale, options: AISummaryOptions = {}): Promise<AISummaryResult> {
+export async function summarizeReportWithAI(report: DailyReportModel, ctx: ExtensionCommandContext | ExtensionContext, locale: UiLocale, options: AISummaryOptions = {}, callModel: SummaryModelCaller = callCurrentModel): Promise<AISummaryResult> {
 	const prompt = buildSummaryPrompt(report, MAX_ITEMS_PER_SECTION, locale);
 	const model = options.model ?? ctx.model;
 	const modelId = model ? `${String((model as any).provider ?? "unknown")}/${String((model as any).id ?? (model as any).name ?? "unknown")}` : "";
 	try {
-		const markdown = await callCurrentModel(model, prompt, ctx, options.thinking);
+		const markdown = await callModel(model, prompt, ctx, options.thinking);
 		if (markdown) return { markdown, source: "ai", model: modelId, errors: options.notice ? [options.notice] : [] };
 		throw new Error("empty response");
 	} catch (error) {
@@ -217,7 +219,7 @@ export async function summarizeReportWithAI(report: DailyReportModel, ctx: Exten
 			const fallbackModel = options.fallbackModel as any;
 			const fallbackId = `${String(fallbackModel.provider ?? "unknown")}/${String(fallbackModel.id ?? fallbackModel.name ?? "unknown")}`;
 			try {
-				const markdown = await callCurrentModel(fallbackModel, prompt, ctx);
+				const markdown = await callModel(fallbackModel, prompt, ctx);
 				if (markdown) return { markdown, source: "ai", model: fallbackId, errors: [options.notice || configuredError, `Configured model failed; used ${fallbackId}.`] };
 			} catch (fallbackError) {
 				return { markdown: "", source: "fallback", errors: [configuredError, `${fallbackId}: ${fallbackError instanceof Error ? fallbackError.message : String(fallbackError)}`] };

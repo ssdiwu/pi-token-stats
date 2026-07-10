@@ -40,7 +40,7 @@ test("显式 day-start 接入 daily 子命令时间窗口", async () => {
 });
 
 test("非 ISO、无效或不完整显式日期被拒绝", async () => {
-	for (const input of ["daily 2026/02/30", "daily 2026-02-30", "daily 2026-07-01 nonsense", "daily 2026-07-01 到", "daily 2026-07-01 2026-07-03"]) {
+	for (const input of ["daily 2026", "daily 2026-07", "daily 2026/07", "daily 2026/02/30", "daily 2026-02-30", "daily 2026-07-01 nonsense", "daily 2026-07-01 到", "daily 2026-07-01 2026-07-03"]) {
 		await assert.rejects(resolveDailyCommandWindows(parseDailyCommand(input), {} as never, "zh-CN"), /invalid report date/);
 	}
 });
