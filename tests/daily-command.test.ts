@@ -29,6 +29,7 @@ test("缺少或无效选项参数时拒绝执行", () => {
 
 test("未知或冲突选项被拒绝", async () => {
 	assert.throws(() => parseDailyCommand("daily --unexpected"), /unsupported daily option/);
+	assert.throws(() => parseDailyCommand("daily -x"), /unsupported daily option/);
 	await assert.rejects(resolveDailyCommandWindows(parseDailyCommand("daily 2026-07-01 --day-start 05:00"), {} as never, "zh-CN"), /cannot be combined/);
 });
 

@@ -34,7 +34,7 @@ export function parseDailyCommand(value: string): DailyCommandRequest {
 			index += 1;
 			continue;
 		}
-		if (tokens[index].startsWith("--")) throw new Error(`unsupported daily option: ${tokens[index]}`);
+		if (tokens[index].startsWith("-")) throw new Error(`unsupported daily option: ${tokens[index]}`);
 		expression.push(tokens[index]);
 	}
 	return { dayStart, projectCurrent, expression: expression.join(" ").trim() };
