@@ -12,7 +12,7 @@ export interface DailyCommandRequest {
 }
 
 export function isDailyCommand(value: string | undefined): boolean {
-	return /^(daily|日报|日報)(?:\s|$)/i.test(value?.trim() || "");
+	return /^daily(?:\s|$)/i.test(value?.trim() || "");
 }
 
 export function parseDailyCommand(value: string): DailyCommandRequest {
@@ -34,6 +34,7 @@ export function parseDailyCommand(value: string): DailyCommandRequest {
 			index += 1;
 			continue;
 		}
+		if (tokens[index].startsWith("--")) throw new Error(`unsupported daily option: ${tokens[index]}`);
 		expression.push(tokens[index]);
 	}
 	return { dayStart, projectCurrent, expression: expression.join(" ").trim() };
@@ -67,7 +68,10 @@ function localDateRange(range: TimeRange): DailyWindowSelection[] {
 }
 
 export async function resolveDailyCommandWindows(request: DailyCommandRequest, ctx: ExtensionCommandContext | ExtensionContext, locale: UiLocale, now = new Date()): Promise<DailyWindowSelection[]> {
-	if (request.dayStart) return [resolveExplicitDayStartWindow(now, request.dayStart)];
+	if (request.dayStart) {
+		if (request.expression) throw new Error("--day-start cannot be combined with an explicit date or range");
+		return [resolveExplicitDayStartWindow(now, request.dayStart)];
+	}
 	if (!request.expression) return [resolveDefaultDailyWindow(now)];
 
 	const dates = request.expression.match(/(\d{4}-\d{2}-\d{2})(?:\s*(?:到|至|~|～|—|–)\s*(\d{4}-\d{2}-\d{2}))?/);

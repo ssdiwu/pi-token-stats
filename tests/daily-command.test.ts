@@ -8,6 +8,8 @@ test("日报仅接受 daily 子命令", () => {
 	assert.equal(isDayReportRequest("daily"), true);
 	assert.equal(isDayReportRequest("report"), false);
 	assert.equal(isDayReportRequest("today report"), false);
+	assert.equal(isDayReportRequest("日报"), false);
+	assert.equal(isDayReportRequest("日報 2026-07-01"), false);
 });
 
 test("daily 子命令识别参数并解析项目和日界", () => {
@@ -23,6 +25,11 @@ test("缺少或无效选项参数时拒绝执行", () => {
 	assert.throws(() => parseDailyCommand("daily --day-start"), /requires HH:mm/);
 	assert.throws(() => parseDailyCommand("daily --project --day-start 03:00"), /requires a value/);
 	assert.throws(() => parseDailyCommand("daily --project other"), /only supports current/);
+});
+
+test("未知或冲突选项被拒绝", async () => {
+	assert.throws(() => parseDailyCommand("daily --unexpected"), /unsupported daily option/);
+	await assert.rejects(resolveDailyCommandWindows(parseDailyCommand("daily 2026-07-01 --day-start 05:00"), {} as never, "zh-CN"), /cannot be combined/);
 });
 
 test("显式 day-start 接入 daily 子命令时间窗口", async () => {

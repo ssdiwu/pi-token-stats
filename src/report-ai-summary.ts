@@ -205,7 +205,7 @@ export interface AISummaryOptions {
 
 export async function summarizeReportWithAI(report: DailyReportModel, ctx: ExtensionCommandContext | ExtensionContext, locale: UiLocale, options: AISummaryOptions = {}): Promise<AISummaryResult> {
 	const prompt = buildSummaryPrompt(report, MAX_ITEMS_PER_SECTION, locale);
-	const model = options.model ?? ctx.model ?? ctx.modelRegistry.getAvailable()[0];
+	const model = options.model ?? ctx.model;
 	const modelId = model ? `${String((model as any).provider ?? "unknown")}/${String((model as any).id ?? (model as any).name ?? "unknown")}` : "";
 	try {
 		const markdown = await callCurrentModel(model, prompt, ctx, options.thinking);
@@ -223,6 +223,6 @@ export async function summarizeReportWithAI(report: DailyReportModel, ctx: Exten
 				return { markdown: "", source: "fallback", errors: [configuredError, `${fallbackId}: ${fallbackError instanceof Error ? fallbackError.message : String(fallbackError)}`] };
 			}
 		}
-		return { markdown: "", source: "fallback", errors: [configuredError] };
+		return { markdown: "", source: "fallback", errors: [...(options.notice ? [options.notice] : []), configuredError] };
 	}
 }

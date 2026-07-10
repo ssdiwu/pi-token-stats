@@ -90,11 +90,11 @@ pi-session-insights/
 │   ├── day-diff.ts         # 按天差异（趋势/新增/消失/工具/异常，纯算法）
 │   ├── report-session-extract.ts # 从 session 提取日报事实（任务/完成/阻塞/工具/文件）
 │   ├── report-model.ts     # 按项目聚合日报模型
-│   ├── report-ai-summary.ts # 用当前模型把日报模型整理成项目化日报
+│   ├── report-ai-summary.ts # 用配置日报模型生成项目化日报，不可用时回退当前会话模型
 │   ├── report-markdown.ts  # AI 失败时的本地 Markdown fallback
 │   ├── report-labels.ts    # 日报多语言文案字典
 │   ├── report-redact.ts    # 日报链脱敏与截断
-│   ├── obsidian-sync.ts    # Obsidian vault 探测 + 日报落点（幂等覆盖）
+│   ├── obsidian-sync.ts    # 遗留 Obsidian 落点工具，不参与默认日报归档
 │   └── panel.ts            # L2 overlay 交互面板（今天消耗/昨天日报切换）
 ├── tests/                  # Node 内置 test（TS 直接 import .ts）
 ├── doc/                    # 需求规格、调研参考、决策档案
