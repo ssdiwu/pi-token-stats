@@ -90,7 +90,8 @@ async function buildDayReportCommand(raw: string, ctx: ExtensionCommandContext |
 		const result = await buildDayReport(selection.date, sessions, locale, {
 			ctx,
 			range: selection.range,
-			forceRefresh: true,
+			// 默认日报的截止时刻会随当前时间推进；显式历史日期/范围可复用缓存，避免重复调用模型。
+			forceRefresh: !request.expression,
 			projectCurrent: request.projectCurrent,
 			currentCwd: ctx.cwd,
 			ai: { model: modelSelection.model, thinking: modelSelection.thinking, notice: modelSelection.notice, fallbackModel: ctx.model },

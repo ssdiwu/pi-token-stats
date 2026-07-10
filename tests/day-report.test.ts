@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { buildDayDeterministic, readDaySummary, writeDaySummary } from "../src/day-cache.ts";
+import { buildDayDeterministic, localDayRange, readDaySummary, writeDaySummary } from "../src/day-cache.ts";
 import { buildDayReport } from "../src/day-report.ts";
 
 const date = "2020-01-02";
@@ -28,6 +28,18 @@ test("历史日报缓存命中时直接返回缓存正文", async () => {
 		assert.equal(result.markdown, "# Cached report\n");
 		assert.equal(result.source, "fallback");
 		assert.deepEqual(result.report.projects, []);
+	} finally {
+		await fs.rm(homeDir, { recursive: true, force: true });
+	}
+});
+
+test("历史完整日期范围命中缓存正文", async () => {
+	const homeDir = await fs.mkdtemp(path.join(os.tmpdir(), "psi-day-range-cache-"));
+	try {
+		const summary = buildDayDeterministic(date, []);
+		await writeDaySummary({ ...summary, reportMarkdown: "# Cached ranged report", reportLocale: "zh-CN", reportSource: "fallback" }, homeDir);
+		const result = await buildDayReport(date, [], "zh-CN", { homeDir, range: localDayRange(date) });
+		assert.equal(result.markdown, "# Cached ranged report\n");
 	} finally {
 		await fs.rm(homeDir, { recursive: true, force: true });
 	}

@@ -86,13 +86,14 @@ export async function buildDayReport(date: string, sessions: SessionFile[], loca
 		diff = nonEmptyHistory.length > 0 ? computeDayDiff(summary, nonEmptyHistory) : null;
 	}
 
-	// 历史日报缓存命中：locale 相同且已有 markdown 时直接返回（昨天页秒开）
+	// 历史日报缓存命中：范围与缓存元数据一致、locale 相同且已有 markdown 时直接返回（昨天页秒开）。
 	const isToday = date === getLocalDateString();
-	if (!options.forceRefresh && !isToday && summary.reportMarkdown && summary.reportLocale === locale && summary.reportSource && summary.reportSource !== "none") {
+	const cachedSummary = options.range && cacheSummary?.since === options.range.since && cacheSummary.until === options.range.until ? cacheSummary : summary;
+	if (!options.forceRefresh && !isToday && cachedSummary.reportMarkdown && cachedSummary.reportLocale === locale && cachedSummary.reportSource && cachedSummary.reportSource !== "none") {
 		const cachedReport: DailyReportModel = {
 			date,
-			range: { label: date, since: summary.since, until: summary.until },
-			generatedAt: summary.generatedAt,
+			range: { label: date, since: cachedSummary.since, until: cachedSummary.until },
+			generatedAt: cachedSummary.generatedAt,
 			stats: {
 				sessionCount: summary.sessionCount,
 				projectCount: summary.dimensions.projects.length,
@@ -111,7 +112,7 @@ export async function buildDayReport(date: string, sessions: SessionFile[], loca
 			followUps: [],
 			scanErrors: [],
 		};
-		return { markdown: appendDiff(summary.reportMarkdown, diff, locale), summary, diff, report: cachedReport, source: summary.reportSource, errors: [] };
+		return { markdown: appendDiff(cachedSummary.reportMarkdown, diff, locale), summary: cachedSummary, diff, report: cachedReport, source: cachedSummary.reportSource, errors: [] };
 	}
 
 	const report = buildReportModel({ date, range: options.range, sessions: scopedSessions, projectCurrent: options.projectCurrent, currentCwd: options.currentCwd, now: new Date() });
