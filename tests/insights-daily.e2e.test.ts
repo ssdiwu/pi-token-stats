@@ -1,0 +1,36 @@
+import assert from "node:assert/strict";
+import { promises as fs } from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import test from "node:test";
+
+import { buildInteractiveReport } from "../src/insights.ts";
+
+test("临时配置经 /insights daily 写入指定归档目录", async () => {
+	const homeDir = await fs.mkdtemp(path.join(os.tmpdir(), "psi-insights-daily-"));
+	const previousHome = process.env.HOME;
+	try {
+		process.env.HOME = homeDir;
+		const outputDir = path.join(homeDir, "reports");
+		await fs.mkdir(path.join(homeDir, ".pi", "agent", "sessions", "project"), { recursive: true });
+		await fs.writeFile(path.join(homeDir, ".pi", "agent", "pi-session-insights.json"), JSON.stringify({ reportOutputDir: outputDir }));
+		await fs.writeFile(
+			path.join(homeDir, ".pi", "agent", "sessions", "project", "session.jsonl"),
+			`${JSON.stringify({ type: "session", id: "test", cwd: "/tmp/project" })}\n`,
+		);
+
+		const report = await buildInteractiveReport("daily 2020-01-02", {
+			hasUI: false,
+			cwd: "/tmp/project",
+			modelRegistry: { getAvailable: () => [] },
+		} as never, "zh-CN");
+
+		const archive = path.join(outputDir, "2020-01-02.md");
+		assert.match(report.body, /已归档/);
+		assert.match(await fs.readFile(archive, "utf8"), /2020-01-02/);
+	} finally {
+		if (previousHome === undefined) delete process.env.HOME;
+		else process.env.HOME = previousHome;
+		await fs.rm(homeDir, { recursive: true, force: true });
+	}
+});

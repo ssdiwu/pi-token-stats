@@ -210,7 +210,7 @@ export async function summarizeReportWithAI(report: DailyReportModel, ctx: Exten
 	try {
 		const markdown = await callCurrentModel(model, prompt, ctx, options.thinking);
 		if (markdown) return { markdown, source: "ai", model: modelId, errors: options.notice ? [options.notice] : [] };
-		return { markdown: "", source: "fallback", errors: [`${modelId || "current model"}: empty response`] };
+		throw new Error("empty response");
 	} catch (error) {
 		const configuredError = `${modelId || "current model"}: ${error instanceof Error ? error.message : String(error)}`;
 		if (options.fallbackModel && options.fallbackModel !== model) {
