@@ -23,7 +23,7 @@
 | `report-model.ts` | 把多 session 事实聚合成日报模型 |
 | `report-ai-summary.ts` | 用配置日报模型（不可用时回退当前会话模型）整理项目化日报 |
 | `report-markdown.ts` | AI 不可用时的本地 Markdown fallback |
-| `report-labels.ts` | 日报文案字典（`zh-CN` / `zh-TW` / `en`） |
+| `report-labels.ts` | 11 语言日报文案字典 |
 | `report-redact.ts` | 日报链路脱敏与截断 |
 | `obsidian-sync.ts` | 遗留 Obsidian 落点工具，不参与默认日报归档 |
 | `panel.ts` | `/insights` L2 overlay 面板 |
@@ -37,8 +37,7 @@
 3. `report-model.ts` 聚合成日报模型
 4. `report-ai-summary.ts` 让配置日报模型按项目输出日报，并在不可用时回退当前会话模型
 5. 模型失败时回退到 `report-markdown.ts`
-6. `day-diff.ts` 追加“差异”段
-7. `day-cache.ts` 缓存历史日报
+6. `day-cache.ts` 缓存历史日报
 
 无参数面板先挂载加载态，再异步读取数据：数字页只扫描今天有写入的 session 文件；第 2 页只读取昨天的缓存日报并限制为预览，不触发日报生成。缺少缓存时提示运行 `/insights daily`；面板关闭后不再重绘异步结果。
 

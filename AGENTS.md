@@ -50,7 +50,7 @@ pi-session-insights/
 - **LLM 边界**：LLM 调用仅用于项目化日报生成；数字面板视图（量纲/项目/工具/错误/健康）**绝不调 LLM**，纯算法。
 - **复用边界**：复用 pi-daily 代码只复制/重构进本项目 `src/`，不 import pi-daily 包（它是独立已发布包）。
 - **交互边界**：`/insights` 无参数 TUI 走 L2 overlay 面板（ADR 0003）；带参数走原生 select/input。旧 ADR 0001 已失效（被 0003 取代）。非 TUI 模式（`-p`/JSON/RPC）退化为纯文本。
-- **locale 边界**：UI 文案跟随 `pi-di18n`；内置 `zh-CN`、`zh-TW`、`en`，其他回退英文。
+- **locale 边界**：日报标签与 AI 输出跟随 `pi-di18n`，支持 11 种日报语言；洞察通用 UI 未翻译语言回退英文。
 - **路径边界**：不硬编码用户本地路径偏好（vault 子目录、缓存目录走配置/探测）。
 - 依赖边界：除 Pi peer dependencies 外保持轻量。
 
