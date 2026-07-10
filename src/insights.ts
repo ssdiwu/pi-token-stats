@@ -105,7 +105,10 @@ async function buildDayReportCommand(raw: string, ctx: ExtensionCommandContext |
 	const notices = [...new Set(results.flatMap((result) => result.errors).filter(Boolean))];
 	if (results.length === 1) {
 		const result = first;
-		const body = `${result.markdown}\n\n---\n${t(locale, "dailyArchived", { path: result.savedPath || "" })}${notices.length > 0 ? `\n⚠️ ${notices.join("；")}` : ""}\n`;
+		const archived = locale === "en" || locale === "zh-CN" || locale === "zh-TW"
+			? t(locale, "dailyArchived", { path: result.savedPath || "" })
+			: `${reportLabelsFor(locale).filesAndTools}: ${result.savedPath || ""}`;
+		const body = `${result.markdown}\n\n---\n${archived}${notices.length > 0 ? `\n⚠️ ${notices.join("；")}` : ""}\n`;
 		return { title: reportLabelsFor(locale).reportTitle(result.date), body, stats: result.summary.stats, sessions: [], models: result.summary.models };
 	}
 	const body = [

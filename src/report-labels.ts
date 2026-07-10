@@ -276,7 +276,9 @@ export function reportLabelsFor(lang: UiLocale): ReportLabels {
 	const base = L[lang];
 	const stats = statsFor(lang);
 	const projectLine: ReportLabels["projectLine"] =
-		lang === "zh-CN"
+		lang !== "en" && lang !== "zh-CN" && lang !== "zh-TW"
+			? (name, cwd, sessions, entries) => `${name}${cwd ? ` (${cwd})` : ""}: ${sessions} / ${entries}`
+			: lang === "zh-CN"
 			? (name, cwd, sessions, entries) => {
 					const cwdPart = cwd ? `（${cwd}）` : "";
 					return `${name}${cwdPart}：${sessions} 个 session，${entries} 条活动`;
@@ -291,13 +293,17 @@ export function reportLabelsFor(lang: UiLocale): ReportLabels {
 						return `${name}${cwdPart}: ${sessions} sessions, ${entries} entries`;
 					};
 	const moreFiles: ReportLabels["moreFiles"] =
-		lang === "zh-CN"
+		lang !== "en" && lang !== "zh-CN" && lang !== "zh-TW"
+			? (n) => `${n}`
+			: lang === "zh-CN"
 			? (n) => `另有 ${n} 个文件未展示`
 			: lang === "zh-TW"
 				? (n) => `另有 ${n} 個檔案未展示`
 				: (n) => `${n} more files not shown`;
 	const toolCount: ReportLabels["toolCount"] =
-		lang === "zh-CN" || lang === "zh-TW"
+		lang !== "en" && lang !== "zh-CN" && lang !== "zh-TW"
+			? (name, count) => `${name}: ${count}`
+			: lang === "zh-CN" || lang === "zh-TW"
 			? (name, count) => `${name}：${count} 次`
 			: (name, count) => `${name}: ${count} times`;
 	return { ...base, stats, projectLine, moreFiles, toolCount };
