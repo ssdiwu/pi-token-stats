@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { buildSummaryFacts, summarizeReportWithAI } from "../src/report-ai-summary.ts";
+import { reportLabelsFor } from "../src/report-labels.ts";
 import { buildReportModel } from "../src/report-model.ts";
 
 const report = buildReportModel({
@@ -24,6 +25,12 @@ test("buildSummaryFacts returns structured facts", () => {
 	assert.equal(facts.projects[0].name, "pi-session-insights");
 	assert.match(facts.generatedAt, /^2026-06-12 \d{2}:\d{2}:\d{2}$/);
 	assert.match(facts.window, /2026-06-12 00:00 → 2026-06-13 00:00/);
+});
+
+test("日报标签覆盖 11 种支持语言", () => {
+	for (const locale of ["zh-CN", "zh-TW", "ja", "ko", "de", "fr", "es", "pt", "ru", "ar", "en"] as const) {
+		assert.ok(reportLabelsFor(locale).reportTitle("2026-07-10"));
+	}
 });
 
 test("配置模型空响应时重试当前会话模型", async () => {

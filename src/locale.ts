@@ -135,7 +135,7 @@ export const MESSAGES = {
 export type MessageKey = keyof typeof MESSAGES.en;
 
 export function t(locale: UiLocale, key: MessageKey, params?: Record<string, string | number>): string {
-	const template = MESSAGES[locale][key] ?? MESSAGES.en[key];
+	const template = (MESSAGES as Record<string, Record<string, string>>)[locale]?.[key] ?? MESSAGES.en[key];
 	return template.replace(/\{([a-zA-Z0-9_]+)\}/g, (_match, name: string) => String(params?.[name] ?? `{${name}}`));
 }
 
@@ -143,6 +143,7 @@ export function normalizeUiLocale(locale: string | undefined): UiLocale {
 	const raw = String(locale || "en").trim().replace(/_/g, "-").toLowerCase();
 	if (raw === "zh-tw" || raw.includes("hant") || raw.startsWith("zh-tw")) return "zh-TW";
 	if (raw.startsWith("zh")) return "zh-CN";
+	for (const language of ["ja", "ko", "de", "fr", "es", "pt", "ru", "ar"] as const) if (raw.startsWith(language)) return language;
 	return "en";
 }
 

@@ -96,6 +96,14 @@ function languageInstructionForLocale(locale: UiLocale): string {
 			return "请用简体中文输出整份日报，所有标题和正文必须是简体中文。";
 		case "zh-TW":
 			return "請用繁體中文輸出整份日報，所有標題和正文必須是繁體中文。";
+		case "ja": return "Write the entire report in Japanese (日本語). All headings and body content must be in Japanese.";
+		case "ko": return "Write the entire report in Korean (한국어). All headings and body content must be in Korean.";
+		case "de": return "Write the entire report in German (Deutsch). All headings and body content must be in German.";
+		case "fr": return "Write the entire report in French (Français). All headings and body content must be in French.";
+		case "es": return "Write the entire report in Spanish (Español). All headings and body content must be in Spanish.";
+		case "pt": return "Write the entire report in Portuguese (Português). All headings and body content must be in Portuguese.";
+		case "ru": return "Write the entire report in Russian (Русский). All headings and body content must be in Russian.";
+		case "ar": return "Write the entire report in Arabic (العربية). All headings and body content must be in Arabic.";
 		case "en":
 		default:
 			return "Write the entire report in English. All headings and body content must be in English.";

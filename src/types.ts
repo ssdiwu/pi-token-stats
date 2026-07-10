@@ -277,7 +277,7 @@ export interface LlmRangeResolution {
 	label?: string;
 }
 
-export type UiLocale = "en" | "zh-CN" | "zh-TW";
+export type UiLocale = "en" | "zh-CN" | "zh-TW" | "ja" | "ko" | "de" | "fr" | "es" | "pt" | "ru" | "ar";
 
 export type I18nApiLike = {
 	getLocale?: () => string;
