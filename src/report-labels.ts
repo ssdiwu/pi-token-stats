@@ -251,7 +251,7 @@ function statsFor(lang: UiLocale): ReportLabels["stats"] {
 				files: (n) => `涉及檔案：${n} 個`,
 				scanWarnings: (n) => `解析警告：${n} 條`,
 			};
-		default:
+		case "en":
 			return {
 				projects: (n) => `Active projects: ${n}`,
 				sessions: (n) => `Active sessions: ${n}`,
@@ -259,6 +259,16 @@ function statsFor(lang: UiLocale): ReportLabels["stats"] {
 				files: (n) => `Files touched: ${n}`,
 				scanWarnings: (n) => `Parse warnings: ${n}`,
 			};
+		default: {
+			const labels = L[lang];
+			return {
+				projects: (n) => `${labels.activeProjects}${labels.sep}${n}`,
+				sessions: (n) => `${labels.overview}${labels.sep}${n}`,
+				entries: (n) => `${labels.progress}${labels.sep}${n}`,
+				files: (n) => `${labels.filesAndTools}${labels.sep}${n}`,
+				scanWarnings: (n) => `${labels.scanWarnings}${labels.sep}${n}`,
+			};
+		}
 	}
 }
 

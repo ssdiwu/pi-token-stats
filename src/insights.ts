@@ -12,6 +12,7 @@ import { buildReport, formatDialogBody } from "./format.ts";
 import { buildDayReport } from "./day-report.ts";
 import { saveDailyReport } from "./daily-archive.ts";
 import { readDailyConfig, selectDailyModel } from "./daily-config.ts";
+import { reportLabelsFor } from "./report-labels.ts";
 import { isDailyCommand, parseDailyCommand, resolveDailyCommandWindows } from "./daily-command.ts";
 import { scanSessions } from "./session-scan.ts";
 import type { Report, RangeRequest, TimeRange, UiLocale } from "./types.ts";
@@ -105,7 +106,7 @@ async function buildDayReportCommand(raw: string, ctx: ExtensionCommandContext |
 	if (results.length === 1) {
 		const result = first;
 		const body = `${result.markdown}\n\n---\n${t(locale, "dailyArchived", { path: result.savedPath || "" })}${notices.length > 0 ? `\n⚠️ ${notices.join("；")}` : ""}\n`;
-		return { title: t(locale, "dailyReportTitle", { date: result.date }), body, stats: result.summary.stats, sessions: [], models: result.summary.models };
+		return { title: reportLabelsFor(locale).reportTitle(result.date), body, stats: result.summary.stats, sessions: [], models: result.summary.models };
 	}
 	const body = [
 		t(locale, "dailyBatchGenerated", { count: results.length }),
