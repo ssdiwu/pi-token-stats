@@ -52,3 +52,14 @@ test("日期范围逐日生成独立归档", async () => {
 		await fs.rm(homeDir, { recursive: true, force: true });
 	}
 });
+
+test("UI 拒绝多天补写时正常取消且不生成文件", async () => {
+	const report = await buildInteractiveReport("daily 2020-01-02 到 2020-01-03", {
+		hasUI: true,
+		cwd: "/tmp/project",
+		ui: { confirm: async () => false },
+		modelRegistry: { getAvailable: () => [] },
+	} as never, "zh-CN");
+	assert.match(report.body, /已取消日报补写/);
+	assert.equal(report.stats.totalTokens, 0);
+});

@@ -5,7 +5,7 @@
 import type { ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
 import { t } from "./locale.ts";
-import { rollupEntries, rollupSessions } from "./usage-rollup.ts";
+import { emptyStats, rollupEntries, rollupSessions } from "./usage-rollup.ts";
 import { isSessionRange, parseRange, parseRangeRequest, resolveRangeWithLlm } from "./time-range.ts";
 import { rollupDimensions } from "./dimensions.ts";
 import { buildReport, formatDialogBody } from "./format.ts";
@@ -79,7 +79,7 @@ async function buildDayReportCommand(raw: string, ctx: ExtensionCommandContext |
 	if (selections.length > 1 && ctx.hasUI) {
 		const dates = selections.map((selection) => selection.date).join("、");
 		const confirmed = await (ctx.ui as any).confirm("确认补写日报？", `将生成并归档 ${selections.length} 篇日报：${dates}`);
-		if (!confirmed) throw new Error("daily report batch cancelled");
+		if (!confirmed) return { title: "多天会话日报", body: "已取消日报补写，未生成或归档文件。", stats: emptyStats(), sessions: [], models: [] };
 	}
 
 	const config = await readDailyConfig();

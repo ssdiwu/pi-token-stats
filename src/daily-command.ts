@@ -41,7 +41,7 @@ export function parseDailyCommand(value: string): DailyCommandRequest {
 }
 
 function parseDate(value: string): Date | null {
-	const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+	const match = value.match(/^(\d{4})[/-](\d{2})[/-](\d{2})$/);
 	if (!match) return null;
 	const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 0, 0, 0, 0);
 	return date.getFullYear() === Number(match[1]) && date.getMonth() === Number(match[2]) - 1 && date.getDate() === Number(match[3]) ? date : null;
@@ -74,11 +74,13 @@ export async function resolveDailyCommandWindows(request: DailyCommandRequest, c
 	}
 	if (!request.expression) return [resolveDefaultDailyWindow(now)];
 
-	const dates = request.expression.match(/^(\d{4}-\d{2}-\d{2})(?:\s*(?:到|至|~|～|—|–)\s*(\d{4}-\d{2}-\d{2}))?$/);
+	const dates = request.expression.match(/^(\d{4}[/-]\d{2}[/-]\d{2})(?:\s*(?:到|至|~|～|—|–)\s*(\d{4}[/-]\d{2}[/-]\d{2}))?$/);
 	if (!dates && /\d{4}(?:[/-]\d{1,2})?(?:[/-]\d{1,2})?/.test(request.expression)) throw new Error(`invalid report date: ${request.expression}`);
 	if (dates) {
 		if (!parseDate(dates[1]) || (dates[2] && !parseDate(dates[2]))) throw new Error(`invalid report date: ${request.expression}`);
-		return expandDailyDateRange(dates[1], dates[2] || dates[1]).map(selectionForDate);
+		const start = dates[1].replaceAll("/", "-");
+		const end = (dates[2] || dates[1]).replaceAll("/", "-");
+		return expandDailyDateRange(start, end).map(selectionForDate);
 	}
 
 	const resolved = await resolveRangeWithLlm(request.expression, ctx) || parseRange(request.expression, locale, now);

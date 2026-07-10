@@ -49,4 +49,6 @@ test("非 ISO、无效或不完整显式日期被拒绝", async () => {
 test("日期范围接入 daily 子命令并逐日展开", async () => {
 	const windows = await resolveDailyCommandWindows(parseDailyCommand("daily 2026-07-07 到 2026-07-09"), {} as never, "zh-CN");
 	assert.deepEqual(windows.map((window) => window.date), ["2026-07-07", "2026-07-08", "2026-07-09"]);
+	const slashWindows = await resolveDailyCommandWindows(parseDailyCommand("daily 2026/07/07 到 2026/07/09"), {} as never, "zh-CN");
+	assert.deepEqual(slashWindows.map((window) => window.date), ["2026-07-07", "2026-07-08", "2026-07-09"]);
 });
