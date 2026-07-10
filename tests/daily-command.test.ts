@@ -39,9 +39,10 @@ test("显式 day-start 接入 daily 子命令时间窗口", async () => {
 	assert.equal(windows[0].range.since, new Date(2026, 6, 10, 3, 0, 0).getTime());
 });
 
-test("非 ISO 或无效日历日期被拒绝", async () => {
-	await assert.rejects(resolveDailyCommandWindows(parseDailyCommand("daily 2026/02/30"), {} as never, "zh-CN"), /invalid report date/);
-	await assert.rejects(resolveDailyCommandWindows(parseDailyCommand("daily 2026-02-30"), {} as never, "zh-CN"), /invalid report date/);
+test("非 ISO、无效或不完整显式日期被拒绝", async () => {
+	for (const input of ["daily 2026/02/30", "daily 2026-02-30", "daily 2026-07-01 nonsense", "daily 2026-07-01 到", "daily 2026-07-01 2026-07-03"]) {
+		await assert.rejects(resolveDailyCommandWindows(parseDailyCommand(input), {} as never, "zh-CN"), /invalid report date/);
+	}
 });
 
 test("日期范围接入 daily 子命令并逐日展开", async () => {

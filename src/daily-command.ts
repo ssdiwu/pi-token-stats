@@ -74,7 +74,7 @@ export async function resolveDailyCommandWindows(request: DailyCommandRequest, c
 	}
 	if (!request.expression) return [resolveDefaultDailyWindow(now)];
 
-	const dates = request.expression.match(/(\d{4}-\d{2}-\d{2})(?:\s*(?:到|至|~|～|—|–)\s*(\d{4}-\d{2}-\d{2}))?/);
+	const dates = request.expression.match(/^(\d{4}-\d{2}-\d{2})(?:\s*(?:到|至|~|～|—|–)\s*(\d{4}-\d{2}-\d{2}))?$/);
 	if (!dates && /\d{4}[/-]\d{1,2}[/-]\d{1,2}/.test(request.expression)) throw new Error(`invalid report date: ${request.expression}`);
 	if (dates) {
 		if (!parseDate(dates[1]) || (dates[2] && !parseDate(dates[2]))) throw new Error(`invalid report date: ${request.expression}`);

@@ -31,7 +31,7 @@ pi-session-insights/
 │   ├── day-diff.ts       # 按天差异（趋势/新增/消失/工具/异常，纯算法）
 │   ├── report-session-extract.ts # 从 session 提取日报事实（任务/完成/阻塞/工具/文件）
 │   ├── report-model.ts   # 按项目聚合日报模型
-│   ├── report-ai-summary.ts # 用当前模型整理项目化日报
+│   ├── report-ai-summary.ts # 配置日报模型→当前会话模型→本地 Markdown fallback
 │   ├── report-markdown.ts # AI 失败时的本地 Markdown fallback
 │   ├── report-labels.ts  # 日报文案字典
 │   ├── report-redact.ts  # 日报脱敏与截断

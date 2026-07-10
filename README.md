@@ -32,7 +32,7 @@
 /insights daily（生成当日项目化日报，含按天差异）
 ```
 
-运行 `/insights daily` 会自动归档到 `~/.pi/agent/pi-session-insights.json` 的 `reportOutputDir`；未配置时写 `~/Documents/pi-daily-reports/YYYY-MM-DD.md`，同日重跑幂等覆盖。`dailyModel` 可选用 `provider/model-id:thinking` 指定日报模型；不可用时会提示并回退当前会话模型。
+运行 `/insights daily` 会自动归档到 `~/.pi/agent/pi-session-insights.json` 的 `reportOutputDir`；未配置时写 `~/Documents/pi-daily-reports/YYYY-MM-DD.md`，同日重跑幂等覆盖。`dailyModel` 可选用 `provider/model-id:thinking` 指定日报模型；不可用时会提示并回退当前会话模型，当前模型也不可用时使用本地 Markdown fallback。
 
 同时注册 `insights` tool（工具），agent 可以在自然语言对话中调用。例如你问"最近 5 小时 token 花了多少？"时，agent 应优先把已理解好的绝对 `since/until` 时间范围传给工具；若没有结构化范围，也可退回传原始时间表达。
 
@@ -90,7 +90,7 @@ pi-session-insights/
 │   ├── day-diff.ts         # 按天差异（趋势/新增/消失/工具/异常，纯算法）
 │   ├── report-session-extract.ts # 从 session 提取日报事实（任务/完成/阻塞/工具/文件）
 │   ├── report-model.ts     # 按项目聚合日报模型
-│   ├── report-ai-summary.ts # 用配置日报模型生成项目化日报，不可用时回退当前会话模型
+│   ├── report-ai-summary.ts # 配置模型→当前会话模型→本地 Markdown fallback
 │   ├── report-markdown.ts  # AI 失败时的本地 Markdown fallback
 │   ├── report-labels.ts    # 日报多语言文案字典
 │   ├── report-redact.ts    # 日报链脱敏与截断

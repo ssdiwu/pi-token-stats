@@ -75,7 +75,7 @@ Pi session JSONL 已原生支持，纯算法可算（已在真实会话文件核
 - 配置文件固定为 `~/.pi/agent/pi-session-insights.json`；不保存 API Key。
 - 日报默认自动写入 `reportOutputDir`；未配置时使用 `~/Documents/pi-daily-reports`。
 - 单日与多天补写均按 `YYYY-MM-DD.md` 写入，同日重跑幂等覆盖。
-- `dailyModel` 采用 `provider/model-id:thinking` 选择器；不可用时显式回退当前会话模型。
+- `dailyModel` 采用 `provider/model-id:thinking` 选择器；不可用时显式回退当前会话模型，当前模型也不可用时使用本地 Markdown fallback，并在日报记录原因。
 
 ### 展示层技术
 
