@@ -29,7 +29,8 @@ export function parseDailyCommand(value: string): DailyCommandRequest {
 		}
 		if (tokens[index] === "--project") {
 			if (!tokens[index + 1] || tokens[index + 1].startsWith("--")) throw new Error("--project requires a value");
-			projectCurrent = tokens[index + 1] === "current";
+			if (tokens[index + 1] !== "current") throw new Error("--project only supports current");
+			projectCurrent = true;
 			index += 1;
 			continue;
 		}
@@ -70,6 +71,7 @@ export async function resolveDailyCommandWindows(request: DailyCommandRequest, c
 	if (!request.expression) return [resolveDefaultDailyWindow(now)];
 
 	const dates = request.expression.match(/(\d{4}-\d{2}-\d{2})(?:\s*(?:到|至|~|～|—|–)\s*(\d{4}-\d{2}-\d{2}))?/);
+	if (!dates && /\d{4}[/-]\d{1,2}[/-]\d{1,2}/.test(request.expression)) throw new Error(`invalid report date: ${request.expression}`);
 	if (dates) {
 		if (!parseDate(dates[1]) || (dates[2] && !parseDate(dates[2]))) throw new Error(`invalid report date: ${request.expression}`);
 		return expandDailyDateRange(dates[1], dates[2] || dates[1]).map(selectionForDate);

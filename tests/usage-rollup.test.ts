@@ -91,6 +91,14 @@ test("rollupEntries 按时间范围过滤", () => {
 	assert.equal(stats.totalTokens, 0);
 });
 
+test("rollupEntries 接受数值外层 timestamp", () => {
+	const entry = assistantEntry("2026-07-08T09:00:00.000Z", usage(10, 20));
+	entry.message!.timestamp = undefined;
+	entry.timestamp = Date.parse("2026-07-08T09:00:00.000Z") as any;
+	const { stats } = rollupEntries([entry], { label: "numeric outer timestamp", since: Date.parse("2026-07-08T08:30:00.000Z"), until: Date.parse("2026-07-08T09:30:00.000Z") });
+	assert.equal(stats.totalTokens, 30);
+});
+
 test("rollupEntries 优先使用字符串 message.timestamp", () => {
 	const entry = assistantEntry("2026-07-08T09:00:00.000Z", usage(10, 20));
 	entry.timestamp = "2026-07-08T10:00:00.000Z";

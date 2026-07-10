@@ -63,7 +63,7 @@ export function buildTodayReportFromSessions(sessions: Awaited<ReturnType<typeof
 }
 
 export function isDayReportRequest(value: string | undefined): boolean {
-	return isDailyCommand(value) || ["report", "today report"].includes(value?.trim().toLowerCase() || "");
+	return isDailyCommand(value);
 }
 
 export function localDateString(date = new Date()): string {

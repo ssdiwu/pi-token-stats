@@ -21,7 +21,9 @@ export function entryTimestamp(entry: SessionEntry): number {
 		if (Number.isFinite(parsedMessageTimestamp)) return parsedMessageTimestamp;
 	}
 
-	const timestamp = Date.parse((entry?.timestamp as string) ?? "");
+	const outerTimestamp = entry?.timestamp;
+	if (typeof outerTimestamp === "number" && Number.isFinite(outerTimestamp) && outerTimestamp > 0) return outerTimestamp;
+	const timestamp = Date.parse((outerTimestamp as string) ?? "");
 	return Number.isFinite(timestamp) ? timestamp : 0;
 }
 

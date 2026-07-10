@@ -56,7 +56,8 @@ async function buildDailyMarkdown(report: DailyReportModel, locale: UiLocale, ct
 	}
 	const aiResult = await summarizeReportWithAI(report, ctx, locale, ai);
 	if (aiResult.markdown) {
-		return { markdown: aiResult.markdown, source: aiResult.source, errors: aiResult.errors };
+		const modelRecord = aiResult.model ? `\n\n---\n\n> 日报模型：${aiResult.model}${aiResult.errors.length > 0 ? `；${aiResult.errors.join("；")}` : ""}\n` : "";
+		return { markdown: `${aiResult.markdown.trimEnd()}${modelRecord}`, source: aiResult.source, errors: aiResult.errors };
 	}
 	const diagnostic = aiResult.errors.length > 0 ? `\n\n---\n\n> pi-session-insights AI summary fallback: ${aiResult.errors.join("; ")}` : "";
 	return { markdown: `${fallbackMarkdown.trim()}${diagnostic}\n`, source: "fallback", errors: aiResult.errors };

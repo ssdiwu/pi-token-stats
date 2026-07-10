@@ -21,7 +21,7 @@
 | `day-diff.ts` | 按天差异（趋势 / 新增 / 消失 / 工具变化 / 异常） |
 | `report-session-extract.ts` | 从 session 提取日报事实：任务、完成、阻塞、工具、文件 |
 | `report-model.ts` | 把多 session 事实聚合成日报模型 |
-| `report-ai-summary.ts` | 用当前会话模型把日报模型整理成项目化日报 |
+| `report-ai-summary.ts` | 用配置日报模型（不可用时回退当前会话模型）整理项目化日报 |
 | `report-markdown.ts` | AI 不可用时的本地 Markdown fallback |
 | `report-labels.ts` | 日报文案字典（`zh-CN` / `zh-TW` / `en`） |
 | `report-redact.ts` | 日报链路脱敏与截断 |
@@ -35,7 +35,7 @@
 1. `session-scan.ts` 扫描本地 session
 2. `report-session-extract.ts` 提取任务 / 完成 / 风险 / 待跟进 / 文件 / 工具事实
 3. `report-model.ts` 聚合成日报模型
-4. `report-ai-summary.ts` 让当前会话模型按项目输出日报
+4. `report-ai-summary.ts` 让配置日报模型按项目输出日报，并在不可用时回退当前会话模型
 5. 模型失败时回退到 `report-markdown.ts`
 6. `day-diff.ts` 追加“差异”段
 7. `day-cache.ts` 缓存历史日报
