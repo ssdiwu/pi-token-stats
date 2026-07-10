@@ -34,3 +34,21 @@ test("临时配置经 /insights daily 写入指定归档目录", async () => {
 		await fs.rm(homeDir, { recursive: true, force: true });
 	}
 });
+
+test("日期范围逐日生成独立归档", async () => {
+	const homeDir = await fs.mkdtemp(path.join(os.tmpdir(), "psi-insights-range-"));
+	const previousHome = process.env.HOME;
+	try {
+		process.env.HOME = homeDir;
+		const outputDir = path.join(homeDir, "reports");
+		await fs.mkdir(path.join(homeDir, ".pi", "agent", "sessions"), { recursive: true });
+		await fs.writeFile(path.join(homeDir, ".pi", "agent", "pi-session-insights.json"), JSON.stringify({ reportOutputDir: outputDir }));
+		const report = await buildInteractiveReport("daily 2020-01-02 到 2020-01-03", { hasUI: false, cwd: "/tmp/project", modelRegistry: { getAvailable: () => [] } } as never, "zh-CN");
+		assert.match(report.body, /已生成并归档 2 篇日报/);
+		await Promise.all(["2020-01-02.md", "2020-01-03.md"].map((file) => fs.access(path.join(outputDir, file))));
+	} finally {
+		if (previousHome === undefined) delete process.env.HOME;
+		else process.env.HOME = previousHome;
+		await fs.rm(homeDir, { recursive: true, force: true });
+	}
+});
