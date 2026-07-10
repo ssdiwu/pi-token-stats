@@ -44,6 +44,11 @@ export const MESSAGES = {
 		dailyPreviewUnavailable: "No cached daily report. Run /insights daily to generate it.",
 		panelLoading: "Loading session insights…",
 		panelLoadFailed: "Unable to load session insights: {message}",
+		dailyBatchConfirmTitle: "Generate daily reports?",
+		dailyBatchConfirmBody: "Generate and archive {count} daily report(s): {dates}",
+		dailyBatchCancelled: "Daily report batch cancelled. No files were generated or archived.",
+		dailyBatchTitle: "Multi-day session reports",
+		dailyBatchGenerated: "Generated and archived {count} daily report(s):",
 	},
 	"zh-CN": {
 		rangeToday: "今天",
@@ -79,6 +84,11 @@ export const MESSAGES = {
 		dailyPreviewUnavailable: "暂无缓存日报。请运行 /insights daily 生成完整日报。",
 		panelLoading: "正在加载会话洞察…",
 		panelLoadFailed: "加载会话洞察失败：{message}",
+		dailyBatchConfirmTitle: "确认补写日报？",
+		dailyBatchConfirmBody: "将生成并归档 {count} 篇日报：{dates}",
+		dailyBatchCancelled: "已取消日报补写，未生成或归档文件。",
+		dailyBatchTitle: "多天会话日报",
+		dailyBatchGenerated: "已生成并归档 {count} 篇日报：",
 	},
 	"zh-TW": {
 		rangeToday: "今天",
@@ -114,6 +124,11 @@ export const MESSAGES = {
 		dailyPreviewUnavailable: "暫無快取日報。請執行 /insights daily 產生完整日報。",
 		panelLoading: "正在載入會話洞察…",
 		panelLoadFailed: "載入會話洞察失敗：{message}",
+		dailyBatchConfirmTitle: "確認補寫日報？",
+		dailyBatchConfirmBody: "將產生並歸檔 {count} 篇日報：{dates}",
+		dailyBatchCancelled: "已取消日報補寫，未產生或歸檔檔案。",
+		dailyBatchTitle: "多天會話日報",
+		dailyBatchGenerated: "已產生並歸檔 {count} 篇日報：",
 	},
 } as const;
 

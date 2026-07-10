@@ -53,13 +53,15 @@ test("日期范围逐日生成独立归档", async () => {
 	}
 });
 
-test("UI 拒绝多天补写时正常取消且不生成文件", async () => {
+test("UI 拒绝多天补写时正常取消且按 locale 显示", async () => {
+	let title = "";
 	const report = await buildInteractiveReport("daily 2020-01-02 到 2020-01-03", {
 		hasUI: true,
 		cwd: "/tmp/project",
-		ui: { confirm: async () => false },
+		ui: { confirm: async (value: string) => { title = value; return false; } },
 		modelRegistry: { getAvailable: () => [] },
-	} as never, "zh-CN");
-	assert.match(report.body, /已取消日报补写/);
+	} as never, "en");
+	assert.equal(title, "Generate daily reports?");
+	assert.match(report.body, /batch cancelled/);
 	assert.equal(report.stats.totalTokens, 0);
 });

@@ -78,8 +78,8 @@ async function buildDayReportCommand(raw: string, ctx: ExtensionCommandContext |
 	const selections = await resolveDailyCommandWindows(request, ctx, locale);
 	if (selections.length > 1 && ctx.hasUI) {
 		const dates = selections.map((selection) => selection.date).join("、");
-		const confirmed = await (ctx.ui as any).confirm("确认补写日报？", `将生成并归档 ${selections.length} 篇日报：${dates}`);
-		if (!confirmed) return { title: "多天会话日报", body: "已取消日报补写，未生成或归档文件。", stats: emptyStats(), sessions: [], models: [] };
+		const confirmed = await (ctx.ui as any).confirm(t(locale, "dailyBatchConfirmTitle"), t(locale, "dailyBatchConfirmBody", { count: selections.length, dates }));
+		if (!confirmed) return { title: t(locale, "dailyBatchTitle"), body: t(locale, "dailyBatchCancelled"), stats: emptyStats(), sessions: [], models: [] };
 	}
 
 	const config = await readDailyConfig();
@@ -108,9 +108,9 @@ async function buildDayReportCommand(raw: string, ctx: ExtensionCommandContext |
 		return { title: `${result.date} 会话日报`, body, stats: result.summary.stats, sessions: [], models: result.summary.models };
 	}
 	const body = [
-		`已生成并归档 ${results.length} 篇日报：`,
+		t(locale, "dailyBatchGenerated", { count: results.length }),
 		...results.map((result) => `- ${result.date}：${result.savedPath}`),
 		...(notices.length > 0 ? ["", `⚠️ ${notices.join("；")}`] : []),
 	].join("\n");
-	return { title: "多天会话日报", body, stats: first.summary.stats, sessions: [], models: first.summary.models };
+	return { title: t(locale, "dailyBatchTitle"), body, stats: first.summary.stats, sessions: [], models: first.summary.models };
 }
