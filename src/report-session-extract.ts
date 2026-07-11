@@ -31,32 +31,7 @@ function toDate(timestamp: Timestamp): Date | null {
 	return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function formatTimePart(value: number): string {
-	return String(value).padStart(2, "0");
-}
-
-export function getLocalDateString(now = new Date()): string {
-	const year = now.getFullYear();
-	const month = formatTimePart(now.getMonth() + 1);
-	const day = formatTimePart(now.getDate());
-	return `${year}-${month}-${day}`;
-}
-
-export function formatLocalDateTime(date: Date): string {
-	return `${getLocalDateString(date)} ${formatTimePart(date.getHours())}:${formatTimePart(date.getMinutes())}`;
-}
-
-export function createDailyTimeRange(targetDate: string): TimeRange {
-	const [year, month, day] = targetDate.split("-").map(Number);
-	const start = new Date(year, month - 1, day, 0, 0, 0, 0);
-	const end = new Date(start);
-	end.setDate(end.getDate() + 1);
-	return {
-		label: `${formatLocalDateTime(start)} → ${formatLocalDateTime(end)}`,
-		since: start.getTime(),
-		until: end.getTime(),
-	};
-}
+import { createDailyTimeRange, formatTimePart } from "./date-utils.ts";
 
 function formatTime(timestamp: Timestamp): string {
 	const date = toDate(timestamp);

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { buildReportModel } from "../src/report-model.ts";
-import { createDailyTimeRange } from "../src/report-session-extract.ts";
+import { createDailyTimeRange } from "../src/date-utils.ts";
 import { renderMarkdownReport } from "../src/report-markdown.ts";
 
 const sessionA = {

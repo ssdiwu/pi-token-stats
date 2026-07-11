@@ -10,9 +10,9 @@
 - `daily-command.test.ts`：`/insights daily` 参数校验、日界与日期范围展开
 - `daily-config.test.ts`：日报目录默认值、模型选择器与模型回退
 - `daily-archive.test.ts`：配置文件读取与同日期稳定归档覆盖
-- `day-cache.test.ts`：按天摘要缓存 / narrative 缓存行为
+- `day-cache.test.ts`：按天摘要缓存行为
 - `day-report.test.ts`：历史日报 markdown 缓存命中行为
-- `day-diff.test.ts`：按天差异算法与渲染
+- `daily-orchestrator.test.ts`：日报批量响应格式化、错误隔离与 seams 注入
 - `obsidian-sync.test.ts`：Obsidian 探测与落点
 - `package-manifest.test.ts`：Pi core runtime import 的 peer dependency 声明
 - `panel.test.ts`：日报预览行数上限与完整日报提示

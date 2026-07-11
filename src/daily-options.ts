@@ -1,15 +1,9 @@
+import { getLocalDateString } from "./date-utils.ts";
 import type { TimeRange } from "./types.ts";
 
 export interface DailyWindowSelection {
 	date: string;
 	range: TimeRange;
-}
-
-function localDateString(date: Date): string {
-	const year = date.getFullYear();
-	const month = String(date.getMonth() + 1).padStart(2, "0");
-	const day = String(date.getDate()).padStart(2, "0");
-	return `${year}-${month}-${day}`;
 }
 
 function addLocalDays(date: Date, days: number): Date {
@@ -30,7 +24,7 @@ function parseDayStart(value: string): { hours: number; minutes: number } {
 
 function makeRange(start: Date, end: Date): TimeRange {
 	return {
-		label: `${localDateString(start)} ${String(start.getHours()).padStart(2, "0")}:${String(start.getMinutes()).padStart(2, "0")} → ${localDateString(end)} ${String(end.getHours()).padStart(2, "0")}:${String(end.getMinutes()).padStart(2, "0")}`,
+		label: `${getLocalDateString(start)} ${String(start.getHours()).padStart(2, "0")}:${String(start.getMinutes()).padStart(2, "0")} → ${getLocalDateString(end)} ${String(end.getHours()).padStart(2, "0")}:${String(end.getMinutes()).padStart(2, "0")}`,
 		since: start.getTime(),
 		until: end.getTime(),
 	};
@@ -40,12 +34,12 @@ export function resolveDefaultDailyWindow(now = new Date()): DailyWindowSelectio
 	if (now.getHours() < 5) {
 		const previousDay = addLocalDays(now, -1);
 		return {
-			date: localDateString(previousDay),
+			date: getLocalDateString(previousDay),
 			range: makeRange(dateAtLocalTime(previousDay, 5, 0), now),
 		};
 	}
 	return {
-		date: localDateString(now),
+		date: getLocalDateString(now),
 		range: makeRange(dateAtLocalTime(now, 0, 0), now),
 	};
 }
@@ -55,7 +49,7 @@ export function resolveExplicitDayStartWindow(now: Date, dayStart: string): Dail
 	const todayStart = dateAtLocalTime(now, hours, minutes);
 	const reportDay = now.getTime() < todayStart.getTime() ? addLocalDays(now, -1) : now;
 	const start = dateAtLocalTime(reportDay, hours, minutes);
-	return { date: localDateString(reportDay), range: makeRange(start, now) };
+	return { date: getLocalDateString(reportDay), range: makeRange(start, now) };
 }
 
 const MAX_DAILY_REPORTS = 31;
@@ -80,7 +74,7 @@ export function expandDailyDateRange(startDate: string, endDate: string): string
 	const dates: string[] = [];
 	for (let cursor = start; cursor <= end; cursor = addLocalDays(cursor, 1)) {
 		if (dates.length >= MAX_DAILY_REPORTS) throw new Error(`daily report range exceeds ${MAX_DAILY_REPORTS} days`);
-		dates.push(localDateString(cursor));
+		dates.push(getLocalDateString(cursor));
 	}
 	return dates;
 }

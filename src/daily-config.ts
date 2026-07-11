@@ -37,12 +37,18 @@ export function getDailyConfigPath(homeDir = os.homedir()): string {
 }
 
 export async function readDailyConfig(homeDir = os.homedir()): Promise<DailyConfig> {
+	const configPath = getDailyConfigPath(homeDir);
+	let text: string;
 	try {
-		const value = JSON.parse(await fs.readFile(getDailyConfigPath(homeDir), "utf8")) as DailyConfigInput;
-		return resolveDailyConfig(value, homeDir);
-	} catch {
-		return resolveDailyConfig({}, homeDir);
+		text = await fs.readFile(configPath, "utf8");
+	} catch (error) {
+		if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+			return resolveDailyConfig({}, homeDir);
+		}
+		throw error;
 	}
+	const value = JSON.parse(text) as DailyConfigInput;
+	return resolveDailyConfig(value, homeDir);
 }
 
 export function resolveDailyConfig(input: DailyConfigInput = {}, homeDir: string): DailyConfig {
@@ -86,4 +92,12 @@ export function selectDailyModel<T extends IdentifiedModel>(available: T[], curr
 	return current
 		? { model: current, source: "current-fallback", notice: `Configured daily model ${describeSelector(selector)} is unavailable; using the current session model.` }
 		: { source: "unavailable", notice: `Configured daily model ${describeSelector(selector)} is unavailable and no current session model is available.` };
+}
+
+/** 从 extension 上下文解析日报模型选择。调用方不再直接访问 modelRegistry。 */
+export function resolveDailyModel<T extends IdentifiedModel>(
+	ctx: { model?: T; modelRegistry: { getAvailable: () => T[] } },
+	config: { dailyModel?: string },
+): DailyModelSelection<T> {
+	return selectDailyModel(ctx.modelRegistry.getAvailable(), ctx.model, config.dailyModel);
 }

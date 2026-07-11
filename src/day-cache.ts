@@ -1,7 +1,7 @@
 // 按天摘要缓存层。
 // 跨天聚合读"天摘要"而非会话原文，避免主代理一次性吞超量内容。
 // 缓存放 Pi 标准数据目录 ~/.pi/agent/session-insights/day-YYYY-MM-DD.json（不硬编码 ~/Documents）。
-// 确定性部分（量纲+多维）纯算法；narrative 叙事在 day-summary.ts 用 LLM 或规则回退填充。
+// 确定性部分（量纲+多维）纯算法；narrative 字段保留以兼容旧缓存，但当前日报链不再使用。
 
 import { promises as fs } from "node:fs";
 import os from "node:os";
@@ -9,6 +9,7 @@ import path from "node:path";
 
 import { rollupDimensions } from "./dimensions.ts";
 import { rollupSessions } from "./usage-rollup.ts";
+import { createDailyTimeRange, getLocalDateString } from "./date-utils.ts";
 import type { DaySummary, SessionFile, TimeRange } from "./types.ts";
 
 export function getCacheDir(homeDir = os.homedir()): string {
@@ -20,10 +21,7 @@ export function dayFilePath(date: string, homeDir = os.homedir()): string {
 }
 
 export function localDayRange(date: string): TimeRange {
-	const [year, month, day] = date.split("-").map(Number);
-	const since = new Date(year, month - 1, day, 0, 0, 0, 0).getTime();
-	const until = new Date(year, month - 1, day + 1, 0, 0, 0, 0).getTime();
-	return { label: date, since, until };
+	return createDailyTimeRange(date);
 }
 
 export async function readDaySummary(date: string, homeDir = os.homedir()): Promise<DaySummary | null> {
@@ -63,19 +61,12 @@ export function buildDayDeterministic(date: string, sessions: SessionFile[]): Da
 	return buildDeterministicSummary(date, localDayRange(date), sessions);
 }
 
-function localDateString(date = new Date()): string {
-	const year = date.getFullYear();
-	const month = String(date.getMonth() + 1).padStart(2, "0");
-	const day = String(date.getDate()).padStart(2, "0");
-	return `${year}-${month}-${day}`;
-}
-
 // 增量补跑：今天重算确定性（数据在变）+ 保留缓存 narrative；历史天完全缓存。
 export async function ensureDaySummary(date: string, sessions: SessionFile[], homeDir = os.homedir()): Promise<DaySummary> {
 	const cached = await readDaySummary(date, homeDir);
 	if (cached) {
-		if (date === localDateString()) {
-			// 今天：确定性 fresh，保留已缓存 narrative（enrichDaySummary 命中后不重调 LLM）
+		if (date === getLocalDateString()) {
+			// 今天：确定性 fresh，保留已缓存 narrative（兼容旧缓存）
 			const fresh = buildDayDeterministic(date, sessions);
 			fresh.narrative = cached.narrative;
 			fresh.narrativeSource = cached.narrativeSource;

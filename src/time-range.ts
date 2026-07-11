@@ -198,7 +198,8 @@ function buildRangeParsePrompt(input: string, now: Date): string {
 }
 
 export async function resolveRangeWithLlm(input: string, ctx: ExtensionCommandContext | ExtensionContext): Promise<TimeRange | "session" | undefined> {
-	const model = ctx.model ?? ctx.modelRegistry.getAvailable()[0];
+	// 范围解析不是日报场景，只使用当前会话模型；无当前模型时不隐式从 registry 首项选取（符合 ADR 0005）。
+	const model = ctx.model;
 	if (!model) return undefined;
 
 	const auth = await ctx.modelRegistry.getApiKeyAndHeaders(model);

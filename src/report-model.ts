@@ -1,7 +1,8 @@
 import os from "node:os";
 import path from "node:path";
 
-import { createDailyTimeRange, filterSessionsByRange, getLocalDateString } from "./report-session-extract.ts";
+import { createDailyTimeRange, getLocalDateString } from "./date-utils.ts";
+import { filterSessionsByRange } from "./report-session-extract.ts";
 import type { DailyReportModel, ParsedSession, ProjectSummary, ScanError, SessionActivity, TimeRange, TimedText, ToolCount } from "./types.ts";
 
 export interface BuildReportModelInput {

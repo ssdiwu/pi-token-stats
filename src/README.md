@@ -12,18 +12,21 @@
 | `dimensions.ts` | K1/K2/K3/K5 多维聚合 |
 | `time-range.ts` | `/insights` 时间范围解析 |
 | `format.ts` | 数字视图纯文本渲染 |
-| `insights.ts` | `/insights` 主逻辑：范围洞察、`daily` 子命令 |
+| `insights.ts` | `/insights` 主逻辑：范围洞察、`daily` 子命令路由 |
 | `daily-options.ts` | 默认/显式日界与多天日期展开 |
 | `daily-config.ts` | `pi-session-insights.json` 的归档目录和模型选择器 |
 | `daily-command.ts` | `/insights daily` 子命令参数与时间范围解析 |
 | `daily-archive.ts` | 配置目录下的稳定日报文件归档 |
+| `daily-orchestrator.ts` | `/insights daily` 编排：确认、扫描、生成、归档、错误隔离 |
 | `day-cache.ts` | 按天缓存：确定性摘要 + 报表 markdown |
-| `day-diff.ts` | 按天差异（趋势 / 新增 / 消失 / 工具变化 / 异常） |
+| `date-utils.ts` | 本地日期字符串与自然日 TimeRange 工具 |
 | `report-session-extract.ts` | 从 session 提取日报事实：任务、完成、阻塞、工具、文件 |
 | `report-model.ts` | 把多 session 事实聚合成日报模型 |
 | `report-ai-summary.ts` | 用配置日报模型（不可用时回退当前会话模型）整理项目化日报 |
 | `report-markdown.ts` | AI 不可用时的本地 Markdown fallback |
-| `report-labels.ts` | 11 语言日报文案字典 |
+| `report-labels.ts` | 11 语言日报正文文案字典 |
+| `daily-ui-labels.ts` | 11 语言日报命令 UI 文案字典 |
+| `panel-data.ts` | L2 overlay 面板数据加载 |
 | `report-redact.ts` | 日报链路脱敏与截断 |
 | `obsidian-sync.ts` | 遗留 Obsidian 落点工具，不参与默认日报归档 |
 | `panel.ts` | `/insights` L2 overlay 面板 |

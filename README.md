@@ -84,15 +84,17 @@ pi-session-insights/
 │   ├── daily-options.ts    # 默认/显式日界
 │   ├── daily-config.ts     # 日报配置与模型选择器
 │   ├── daily-archive.ts    # 配置目录稳定归档
+│   ├── daily-orchestrator.ts # /insights daily 编排：确认、扫描、生成、归档、错误隔离
 │   ├── day-cache.ts        # 按天摘要缓存（day-*.json 读写幂等 + 增量补跑）
-│   ├── day-summary.ts      # 旧按天叙事生成链（历史兼容，逐步淡出）
-│   ├── day-report.ts       # 日报组装：接日报生成链 + 差异 + 缓存
-│   ├── day-diff.ts         # 按天差异（趋势/新增/消失/工具/异常，纯算法）
+│   ├── day-report.ts       # 日报组装：接日报生成链 + 缓存
+│   ├── date-utils.ts       # 本地日期字符串与自然日 TimeRange
 │   ├── report-session-extract.ts # 从 session 提取日报事实（任务/完成/阻塞/工具/文件）
 │   ├── report-model.ts     # 按项目聚合日报模型
 │   ├── report-ai-summary.ts # 配置模型→当前会话模型→本地 Markdown fallback
 │   ├── report-markdown.ts  # AI 失败时的本地 Markdown fallback
-│   ├── report-labels.ts    # 日报多语言文案字典
+│   ├── report-labels.ts    # 日报正文多语言文案字典
+│   ├── daily-ui-labels.ts  # 日报命令 UI 多语言文案字典
+│   ├── panel-data.ts       # L2 overlay 面板数据加载
 │   ├── report-redact.ts    # 日报链脱敏与截断
 │   ├── obsidian-sync.ts    # 遗留 Obsidian 落点工具，不参与默认日报归档
 │   └── panel.ts            # L2 overlay 交互面板（今天消耗/昨天日报切换）

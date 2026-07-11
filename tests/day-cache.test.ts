@@ -8,7 +8,6 @@ import path from "node:path";
 import { promises as fs } from "node:fs";
 
 import { buildDayDeterministic, dayFilePath, ensureDaySummary, localDayRange, readDaySummary, writeDaySummary } from "../src/day-cache.ts";
-import { enrichDaySummary, generateDayNarrative, generateDayNarrativeFallback } from "../src/day-summary.ts";
 import type { SessionEntry, SessionFile } from "../src/types.ts";
 
 const tmpHome = path.join(os.tmpdir(), `psi-test-${Date.now()}-${process.pid}`);
@@ -87,27 +86,4 @@ test("ensureDaySummary 缓存命中（第二次读不重算）", async () => {
 test("readDaySummary 缺失返回 null", async () => {
 	const missing = await readDaySummary("2099-01-01", tmpHome);
 	assert.equal(missing, null);
-});
-
-test("generateDayNarrativeFallback 纯函数输出关键字段", () => {
-	const summary = buildDayDeterministic(DATE, [sampleSession]);
-	const narrative = generateDayNarrativeFallback(summary, "zh-CN");
-	assert.ok(narrative.includes(DATE));
-	assert.ok(narrative.includes("150"));
-	assert.ok(narrative.includes("Alpha 任务"));
-	assert.ok(narrative.includes("bash"));
-});
-
-test("generateDayNarrative 不传 ctx 走规则回退", async () => {
-	const summary = buildDayDeterministic(DATE, [sampleSession]);
-	const result = await generateDayNarrative(summary, "zh-CN");
-	assert.equal(result.source, "fallback");
-	assert.ok(result.narrative.length > 0);
-});
-
-test("enrichDaySummary 不传 ctx 填充 fallback 叙事", async () => {
-	const summary = buildDayDeterministic(DATE, [sampleSession]);
-	const enriched = await enrichDaySummary(summary, "zh-CN");
-	assert.equal(enriched.narrativeSource, "fallback");
-	assert.ok(enriched.narrative && enriched.narrative.length > 0);
 });

@@ -5,10 +5,8 @@ import type { ExtensionAPI, ExtensionCommandContext, ExtensionContext } from "@e
 import { Type } from "typebox";
 
 import { resolveUiLocale, t } from "./src/locale.ts";
-import { reportLabelsFor } from "./src/report-labels.ts";
-import { buildInteractiveReport, buildReportForRequest, buildTodayReportFromSessions, localDateString } from "./src/insights.ts";
-import { readDaySummary } from "./src/day-cache.ts";
-import { scanSessions } from "./src/session-scan.ts";
+import { buildInteractiveReport, buildReportForRequest } from "./src/insights.ts";
+import { loadInsightsPanelData } from "./src/panel-data.ts";
 import { InsightsPanel } from "./src/panel.ts";
 import type { UiLocale } from "./src/types.ts";
 
@@ -39,26 +37,6 @@ async function showDialog(ctx: ExtensionCommandContext | ExtensionContext, title
 		currentTitle = report.title;
 		currentBody = report.body;
 	}
-}
-
-async function loadInsightsPanelData(locale: UiLocale, now: Date) {
-	const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-	const yesterdayDate = new Date(now);
-	yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-	const yesterday = localDateString(yesterdayDate);
-	const [{ sessions }, cachedDaily] = await Promise.all([
-		scanSessions({ modifiedSince: todayStart }),
-		readDaySummary(yesterday),
-	]);
-
-	const numeric = buildTodayReportFromSessions(sessions, locale, now);
-	return {
-		numericTitle: numeric.title,
-		numericBody: numeric.body,
-		dailyTitle: reportLabelsFor(locale).reportTitle(yesterday),
-		dailyBody: cachedDaily?.reportMarkdown || t(locale, "dailyPreviewUnavailable"),
-		dailyPreviewHint: t(locale, "dailyPreviewHint"),
-	};
 }
 
 async function showInsightsPanel(ctx: ExtensionCommandContext | ExtensionContext, locale: UiLocale): Promise<void> {

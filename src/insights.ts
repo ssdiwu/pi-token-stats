@@ -5,31 +5,14 @@
 import type { ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
 import { t } from "./locale.ts";
-import { emptyStats, rollupEntries, rollupSessions } from "./usage-rollup.ts";
+import { rollupEntries, rollupSessions } from "./usage-rollup.ts";
 import { isSessionRange, parseRange, parseRangeRequest, resolveRangeWithLlm } from "./time-range.ts";
 import { rollupDimensions } from "./dimensions.ts";
 import { buildReport, formatDialogBody } from "./format.ts";
-import { buildDayReport } from "./day-report.ts";
-import { saveDailyReport } from "./daily-archive.ts";
-import { readDailyConfig, selectDailyModel } from "./daily-config.ts";
-import { reportLabelsFor } from "./report-labels.ts";
-import { isDailyCommand, parseDailyCommand, resolveDailyCommandWindows } from "./daily-command.ts";
+import { isDailyCommand } from "./daily-command.ts";
 import { scanSessions } from "./session-scan.ts";
+import { runDailyReports } from "./daily-orchestrator.ts";
 import type { Report, RangeRequest, TimeRange, UiLocale } from "./types.ts";
-
-function dailyUi(locale: UiLocale): { archived: string; batchTitle: string; batchGenerated: string } {
-	const translated: Partial<Record<UiLocale, { archived: string; batchTitle: string; batchGenerated: string }>> = {
-		ja: { archived: "保存済み", batchTitle: "複数日のセッションレポート", batchGenerated: "生成して保存した日報：" },
-		ko: { archived: "보관됨", batchTitle: "여러 날의 세션 보고서", batchGenerated: "생성 및 보관된 일일 보고서:" },
-		de: { archived: "Archiviert", batchTitle: "Mehrere Sitzungsberichte", batchGenerated: "Erstellte und archivierte Tagesberichte:" },
-		fr: { archived: "Archivé", batchTitle: "Rapports de session sur plusieurs jours", batchGenerated: "Rapports quotidiens générés et archivés :" },
-		es: { archived: "Archivado", batchTitle: "Informes de sesión de varios días", batchGenerated: "Informes diarios generados y archivados:" },
-		pt: { archived: "Arquivado", batchTitle: "Relatórios de sessão de vários dias", batchGenerated: "Relatórios diários gerados e arquivados:" },
-		ru: { archived: "Архивировано", batchTitle: "Отчёты о сеансах за несколько дней", batchGenerated: "Созданные и архивированные ежедневные отчёты:" },
-		ar: { archived: "مؤرشف", batchTitle: "تقارير الجلسات لعدة أيام", batchGenerated: "التقارير اليومية التي تم إنشاؤها وأرشفتها:" },
-	};
-	return translated[locale] ?? { archived: t(locale, "dailyArchived"), batchTitle: t(locale, "dailyBatchTitle"), batchGenerated: t(locale, "dailyBatchGenerated") };
-}
 
 function buildRangeReportFromSessions(sessions: Awaited<ReturnType<typeof scanSessions>>["sessions"], range: TimeRange, locale: UiLocale): Report {
 	const { stats, models, sessions: sessionRollups } = rollupSessions(sessions, range);
@@ -62,7 +45,7 @@ export async function buildReportForRequest(request: RangeRequest | undefined, c
 export async function buildInteractiveReport(rangeText: string | undefined, ctx: ExtensionCommandContext | ExtensionContext, locale: UiLocale): Promise<Report> {
 	const raw = rangeText?.trim();
 	if (!raw) return buildRangeReport(parseRange(undefined, locale) as TimeRange, locale);
-	if (isDayReportRequest(raw)) return buildDayReportCommand(raw, ctx, locale);
+	if (isDayReportRequest(raw)) return runDailyReports(raw, ctx, locale);
 	if (isSessionRange(raw)) return buildSessionReport(ctx, locale);
 
 	const llmRange = await resolveRangeWithLlm(raw, ctx);
@@ -79,57 +62,4 @@ export function buildTodayReportFromSessions(sessions: Awaited<ReturnType<typeof
 
 export function isDayReportRequest(value: string | undefined): boolean {
 	return isDailyCommand(value);
-}
-
-export function localDateString(date = new Date()): string {
-	const year = date.getFullYear();
-	const month = String(date.getMonth() + 1).padStart(2, "0");
-	const day = String(date.getDate()).padStart(2, "0");
-	return `${year}-${month}-${day}`;
-}
-
-async function buildDayReportCommand(raw: string, ctx: ExtensionCommandContext | ExtensionContext, locale: UiLocale): Promise<Report> {
-	const request = parseDailyCommand(raw);
-	const selections = await resolveDailyCommandWindows(request, ctx, locale);
-	if (selections.length > 1 && ctx.hasUI) {
-		const dates = selections.map((selection) => selection.date).join("、");
-		const confirmed = await (ctx.ui as any).confirm(t(locale, "dailyBatchConfirmTitle"), t(locale, "dailyBatchConfirmBody", { count: selections.length, dates }));
-		if (!confirmed) return { title: t(locale, "dailyBatchTitle"), body: t(locale, "dailyBatchCancelled"), stats: emptyStats(), sessions: [], models: [] };
-	}
-
-	const config = await readDailyConfig();
-	const modelSelection = selectDailyModel(ctx.modelRegistry.getAvailable(), ctx.model, config.dailyModel);
-	const { sessions } = await scanSessions();
-	const results: Array<{ date: string; markdown: string; summary: Awaited<ReturnType<typeof buildDayReport>>["summary"]; errors: string[]; savedPath?: string }> = [];
-	for (const selection of selections) {
-		const result = await buildDayReport(selection.date, sessions, locale, {
-			ctx,
-			range: selection.range,
-			// 默认日报的截止时刻会随当前时间推进；显式历史日期/范围可复用缓存，避免重复调用模型。
-			forceRefresh: !request.expression,
-			projectCurrent: request.projectCurrent,
-			currentCwd: ctx.cwd,
-			ai: { model: modelSelection.model, thinking: modelSelection.thinking, notice: modelSelection.notice, fallbackModel: ctx.model },
-		});
-		const saved = await saveDailyReport(selection.date, result.markdown, config.outputDir);
-		results.push({ date: selection.date, markdown: result.markdown, summary: result.summary, errors: result.errors, savedPath: saved.path });
-	}
-
-	const first = results[0];
-	const notices = [...new Set(results.flatMap((result) => result.errors).filter(Boolean))];
-	if (results.length === 1) {
-		const result = first;
-		const ui = dailyUi(locale);
-		const archived = locale === "en" || locale === "zh-CN" || locale === "zh-TW"
-			? t(locale, "dailyArchived", { path: result.savedPath || "" })
-			: `${ui.archived}: ${result.savedPath || ""}`;
-		const body = `${result.markdown}\n\n---\n${archived}${notices.length > 0 ? `\n⚠️ ${notices.join("；")}` : ""}\n`;
-		return { title: reportLabelsFor(locale).reportTitle(result.date), body, stats: result.summary.stats, sessions: [], models: result.summary.models };
-	}
-	const body = [
-		locale === "en" || locale === "zh-CN" || locale === "zh-TW" ? t(locale, "dailyBatchGenerated", { count: results.length }) : dailyUi(locale).batchGenerated,
-		...results.map((result) => `- ${result.date}：${result.savedPath}`),
-		...(notices.length > 0 ? ["", `⚠️ ${notices.join("；")}`] : []),
-	].join("\n");
-	return { title: locale === "en" || locale === "zh-CN" || locale === "zh-TW" ? t(locale, "dailyBatchTitle") : dailyUi(locale).batchTitle, body, stats: first.summary.stats, sessions: [], models: first.summary.models };
 }

@@ -65,3 +65,21 @@ test("UI 拒绝多天补写时正常取消且按 locale 显示", async () => {
 	assert.match(report.body, /batch cancelled/);
 	assert.equal(report.stats.totalTokens, 0);
 });
+
+test("多天归档失败时保留批次结果而非抛出", async () => {
+	const homeDir = await fs.mkdtemp(path.join(os.tmpdir(), "psi-insights-failed-archive-"));
+	const previousHome = process.env.HOME;
+	try {
+		process.env.HOME = homeDir;
+		const outputFile = path.join(homeDir, "not-a-directory");
+		await fs.mkdir(path.join(homeDir, ".pi", "agent", "sessions"), { recursive: true });
+		await fs.writeFile(outputFile, "file blocks archive directory");
+		await fs.writeFile(path.join(homeDir, ".pi", "agent", "pi-session-insights.json"), JSON.stringify({ reportOutputDir: outputFile }));
+		const report = await buildInteractiveReport("daily 2020-01-02 到 2020-01-03", { hasUI: false, cwd: "/tmp/project", modelRegistry: { getAvailable: () => [] } } as never, "zh-CN");
+		assert.match(report.body, /失败/);
+	} finally {
+		if (previousHome === undefined) delete process.env.HOME;
+		else process.env.HOME = previousHome;
+		await fs.rm(homeDir, { recursive: true, force: true });
+	}
+});

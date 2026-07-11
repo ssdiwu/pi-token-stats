@@ -1,7 +1,7 @@
 import type { ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
 import { expandDailyDateRange, resolveDefaultDailyWindow, resolveExplicitDayStartWindow, type DailyWindowSelection } from "./daily-options.ts";
-import { createDailyTimeRange, getLocalDateString } from "./report-session-extract.ts";
+import { createDailyTimeRange, getLocalDateString } from "./date-utils.ts";
 import { parseRange, resolveRangeWithLlm } from "./time-range.ts";
 import type { TimeRange, UiLocale } from "./types.ts";
 
