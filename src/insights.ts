@@ -8,21 +8,23 @@ import { t } from "./locale.ts";
 import { rollupEntries, rollupSessions } from "./usage-rollup.ts";
 import { isSessionRange, parseRange, parseRangeRequest, resolveRangeWithLlm } from "./time-range.ts";
 import { rollupDimensions } from "./dimensions.ts";
+import { filterAuditUsage, rollupAuditUsage, scanAuditUsage } from "./audit-usage.ts";
 import { buildReport, formatDialogBody } from "./format.ts";
 import { isDailyCommand } from "./daily-command.ts";
 import { scanSessions } from "./session-scan.ts";
 import { runDailyReports } from "./daily-orchestrator.ts";
-import type { Report, RangeRequest, TimeRange, UiLocale } from "./types.ts";
+import type { AuditUsageSummary, Report, RangeRequest, TimeRange, UiLocale } from "./types.ts";
 
-function buildRangeReportFromSessions(sessions: Awaited<ReturnType<typeof scanSessions>>["sessions"], range: TimeRange, locale: UiLocale): Report {
+function buildRangeReportFromSessions(sessions: Awaited<ReturnType<typeof scanSessions>>["sessions"], range: TimeRange, locale: UiLocale, auditUsage?: AuditUsageSummary): Report {
 	const { stats, models, sessions: sessionRollups } = rollupSessions(sessions, range);
 	const dimensions = rollupDimensions(sessions, range);
-	return buildReport(t(locale, "title", { range: range.label }), range, stats, sessionRollups, models, locale, dimensions);
+	return buildReport(t(locale, "title", { range: range.label }), range, stats, sessionRollups, models, locale, dimensions, auditUsage);
 }
 
 export async function buildRangeReport(range: TimeRange, locale: UiLocale): Promise<Report> {
-	const { sessions } = await scanSessions();
-	return buildRangeReportFromSessions(sessions, range, locale);
+	const [{ sessions }, auditRecords] = await Promise.all([scanSessions(), scanAuditUsage()]);
+	const auditUsage = rollupAuditUsage(filterAuditUsage(auditRecords, range));
+	return buildRangeReportFromSessions(sessions, range, locale, auditUsage);
 }
 
 export function buildSessionReport(ctx: ExtensionCommandContext | ExtensionContext, locale: UiLocale): Report {
@@ -55,9 +57,9 @@ export async function buildInteractiveReport(rangeText: string | undefined, ctx:
 	return fallback === "session" ? buildSessionReport(ctx, locale) : buildRangeReport(fallback, locale);
 }
 
-export function buildTodayReportFromSessions(sessions: Awaited<ReturnType<typeof scanSessions>>["sessions"], locale: UiLocale, now = new Date()): Report {
+export function buildTodayReportFromSessions(sessions: Awaited<ReturnType<typeof scanSessions>>["sessions"], locale: UiLocale, now = new Date(), auditUsage?: AuditUsageSummary): Report {
 	const range = parseRange(undefined, locale, now) as TimeRange;
-	return buildRangeReportFromSessions(sessions, range, locale);
+	return buildRangeReportFromSessions(sessions, range, locale, auditUsage);
 }
 
 export function isDayReportRequest(value: string | undefined): boolean {

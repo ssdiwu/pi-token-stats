@@ -5,6 +5,8 @@
 ## 当前覆盖
 
 - `usage-rollup.test.ts`：K0 消耗量纲
+- `audit-usage.test.ts`：pi-dgoal 脱敏审核用量扫描、时间过滤、去重聚合与渲染
+- `insights-tool.test.ts`：工具结果的摘要 / 展开文字投影
 - `dimensions.test.ts`：K1/K2/K3/K5 多维聚合
 - `daily-options.test.ts`：日报自适应日界、显式日界与多天日期展开
 - `daily-command.test.ts`：`/insights daily` 参数校验、日界与日期范围展开

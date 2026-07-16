@@ -47,7 +47,7 @@
 
 - 默认 `/insights` = 今天本机所有 session 的统计。
 - 时间范围统计扫描 `~/.pi/agent/sessions` 下所有 JSONL（异步、容错解析）。
-- 时间窗口按 assistant message（模型回复）的实际 timestamp（时间戳）聚合 token 与 cost。
+- 时间窗口按 assistant message（模型回复）的实际 timestamp（时间戳）聚合 token 与 cost；同时只读合并 `~/.pi/agent/audit-usage.jsonl` 中 pi-dgoal 的脱敏审核用量（按 `dedupKey` 去重）。
 - 模型维度按 `provider/model`（供应商/模型）聚合；即使 model 同名，只要 provider 不同也会分开统计。
 - `/insights 当前会话` 使用 `ctx.sessionManager.getBranch()`，口径接近官方 `/session` 的 active branch。
 
@@ -94,6 +94,7 @@ pi-session-insights/
 │   ├── report-markdown.ts  # AI 失败时的本地 Markdown fallback
 │   ├── report-labels.ts    # 日报正文多语言文案字典
 │   ├── daily-ui-labels.ts  # 日报命令 UI 多语言文案字典
+│   ├── audit-usage.ts      # pi-dgoal audit-usage.jsonl 扫描、时间过滤与数字聚合
 │   ├── panel-data.ts       # L2 overlay 面板数据加载
 │   ├── report-redact.ts    # 日报链脱敏与截断
 │   ├── obsidian-sync.ts    # 遗留 Obsidian 落点工具，不参与默认日报归档

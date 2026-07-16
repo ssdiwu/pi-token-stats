@@ -2,6 +2,7 @@
 // 注册 /insights 命令和 insights tool：量纲聚合 + 多维分析 + 叙事日报 + 配置化归档 + L2 面板。
 
 import type { ExtensionAPI, ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
 import { resolveUiLocale, t } from "./src/locale.ts";
@@ -16,6 +17,14 @@ const InsightsParams = Type.Object({
 	until: Type.Optional(Type.String({ description: "Absolute local end time, e.g. 2026-06-19 03:50:57" })),
 	label: Type.Optional(Type.String({ description: "Display label for the selected range, e.g. 昨天到今天" })),
 });
+
+function renderInsightsResult(result: { content?: Array<{ type?: string; text?: string }> }, options: { expanded: boolean; isPartial: boolean }, theme: any): Text {
+	if (options.isPartial) return new Text(theme.fg("warning", "正在生成会话洞察..."), 0, 0);
+	const text = result.content?.find((item) => item.type === "text")?.text ?? "";
+	if (options.expanded) return new Text(theme.fg("toolOutput", text), 0, 0);
+	const title = text.split("\n", 1)[0] || "Session insights";
+	return new Text(theme.fg("success", `${title} (Ctrl+O to expand)`), 0, 0);
+}
 
 async function showDialog(ctx: ExtensionCommandContext | ExtensionContext, title: string, body: string, locale: UiLocale): Promise<void> {
 	// print 模式纯文本；TUI 带参数路径走原生 select/input（无参数 TUI 走 L2 面板，见 showInsightsPanel）。
@@ -71,6 +80,9 @@ export default function sessionInsightsExtension(pi: ExtensionAPI) {
 				content: [{ type: "text", text: `${report.title}\n\n${report.body}` }],
 				details: { stats: report.stats, sessions: report.sessions.length, models: report.models, locale },
 			};
+		},
+		renderResult(result, options, theme) {
+			return renderInsightsResult(result, options, theme);
 		},
 	});
 

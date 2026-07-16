@@ -92,6 +92,18 @@ export interface SessionRollup {
 	models: ModelRollup[];
 }
 
+export interface AuditUsageSummary {
+	recordCount: number;
+	attemptCount: number;
+	inputTokens: number;
+	outputTokens: number;
+	cacheReadTokens: number;
+	cacheWriteTokens: number;
+	totalTokens: number;
+	totalCost: number;
+	byModel: Array<{ model: string; attempts: number; totalTokens: number; totalCost: number }>;
+}
+
 export interface Report {
 	title: string;
 	body: string;
@@ -99,6 +111,7 @@ export interface Report {
 	sessions: SessionRollup[];
 	models: ModelRollup[];
 	dimensions?: Dimensions;
+	auditUsage?: AuditUsageSummary;
 }
 
 // 多维聚合类型（K1 项目 / K2 工具 / K3 错误 / K5 健康）

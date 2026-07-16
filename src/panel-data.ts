@@ -6,6 +6,7 @@ import { t } from "./locale.ts";
 import { reportLabelsFor } from "./report-labels.ts";
 import { scanSessions } from "./session-scan.ts";
 import { buildTodayReportFromSessions } from "./insights.ts";
+import { filterAuditUsage, rollupAuditUsage, scanAuditUsage } from "./audit-usage.ts";
 import type { UiLocale } from "./types.ts";
 
 export interface PanelDataPayload {
@@ -21,12 +22,17 @@ export async function loadInsightsPanelData(locale: UiLocale, now: Date): Promis
 	const yesterdayDate = new Date(now);
 	yesterdayDate.setDate(yesterdayDate.getDate() - 1);
 	const yesterday = getLocalDateString(yesterdayDate);
-	const [{ sessions }, cachedDaily] = await Promise.all([
+	const [{ sessions }, cachedDaily, auditRecords] = await Promise.all([
 		scanSessions({ modifiedSince: todayStart }),
 		readDaySummary(yesterday),
+		scanAuditUsage(),
 	]);
 
-	const numeric = buildTodayReportFromSessions(sessions, locale, now);
+	const numeric = buildTodayReportFromSessions(sessions, locale, now, rollupAuditUsage(filterAuditUsage(auditRecords, {
+		label: "today",
+		since: todayStart,
+		until: now.getTime() + 1,
+	})));
 	return {
 		numericTitle: numeric.title,
 		numericBody: numeric.body,

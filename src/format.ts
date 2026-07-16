@@ -3,7 +3,7 @@
 
 import { t } from "./locale.ts";
 import { messageTotal } from "./usage-rollup.ts";
-import type { Dimensions, ModelRollup, Report, SessionRollup, TimeRange, TokenStats, UiLocale } from "./types.ts";
+import type { AuditUsageSummary, Dimensions, ModelRollup, Report, SessionRollup, TimeRange, TokenStats, UiLocale } from "./types.ts";
 
 export function formatNumber(value: number, locale: UiLocale): string {
 	return Math.round(value).toLocaleString(locale);
@@ -60,7 +60,7 @@ function formatDimensions(dimensions: Dimensions, locale: UiLocale): string[] {
 	return lines;
 }
 
-export function formatDialogBody(range: TimeRange | undefined, stats: TokenStats, sessions: SessionRollup[], models: ModelRollup[], locale: UiLocale, dimensions?: Dimensions): string {
+export function formatDialogBody(range: TimeRange | undefined, stats: TokenStats, sessions: SessionRollup[], models: ModelRollup[], locale: UiLocale, dimensions?: Dimensions, auditUsage?: AuditUsageSummary): string {
 	const lines = [
 		...(range ? [t(locale, "range", { since: formatTime(range.since, locale), until: formatTime(range.until, locale) }), t(locale, "sessions", { count: formatNumber(sessions.length, locale) })] : []),
 		t(locale, "messages", {
@@ -99,10 +99,17 @@ export function formatDialogBody(range: TimeRange | undefined, stats: TokenStats
 	}
 
 	if (dimensions) lines.push(...formatDimensions(dimensions, locale));
+	if (auditUsage?.recordCount) {
+		lines.push("", t(locale, "auditUsage", {
+			attempts: formatNumber(auditUsage.attemptCount, locale),
+			tokens: formatNumber(auditUsage.totalTokens, locale),
+			cost: formatCost(auditUsage.totalCost),
+		}));
+	}
 
 	return lines.join("\n");
 }
 
-export function buildReport(title: string, range: TimeRange | undefined, stats: TokenStats, sessions: SessionRollup[], models: ModelRollup[], locale: UiLocale, dimensions?: Dimensions): Report {
-	return { title, body: formatDialogBody(range, stats, sessions, models, locale, dimensions), stats, sessions, models, dimensions };
+export function buildReport(title: string, range: TimeRange | undefined, stats: TokenStats, sessions: SessionRollup[], models: ModelRollup[], locale: UiLocale, dimensions?: Dimensions, auditUsage?: AuditUsageSummary): Report {
+	return { title, body: formatDialogBody(range, stats, sessions, models, locale, dimensions, auditUsage), stats, sessions, models, dimensions, auditUsage };
 }
