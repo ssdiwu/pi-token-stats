@@ -1,6 +1,6 @@
 {
 	"name": "pi-session-insights",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "Pi extension for session information insights — usage, projects, tools, errors, health, and daily narrative.",
 	"type": "module",
 	"keywords": [

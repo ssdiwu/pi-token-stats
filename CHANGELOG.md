@@ -4,6 +4,8 @@ All notable changes to `pi-session-insights` are documented in this file.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-18
+
 ### Added
 
 - **独立 `/daily` 命令与 `daily` tool**：项目化日报从 `/insights daily` 子命令升级为独立入口，LLM 可通过结构化参数（`date`/`range`/`projectCurrent`/`dayStart`）直接生成日报；pi-daily 卸载后由本项目接管每日日报。
