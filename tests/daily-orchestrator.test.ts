@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { buildDailyResponse, runDailyReports } from "../src/daily-orchestrator.ts";
+import { parseDailyCommand } from "../src/daily-command.ts";
 import type { DailyReportModel, DaySummary } from "../src/types.ts";
 
 function makeSummary(): DaySummary {
@@ -73,7 +74,7 @@ test("runDailyReports 注入依赖后单日成功返回归档报告", async () =
 	const summary = makeSummary();
 	const report = makeReport();
 	const response = await runDailyReports(
-		"daily 2026-07-08",
+		parseDailyCommand("2026-07-08"),
 		{ hasUI: false, cwd: "/tmp", model: undefined, modelRegistry: { getAvailable: () => [] } } as never,
 		"zh-CN",
 		{
@@ -90,28 +91,96 @@ test("runDailyReports 注入依赖后单日成功返回归档报告", async () =
 	assert.match(response.body, /已归档/);
 });
 
-test("runDailyReports 多日确认取消返回取消文案", async () => {
+test("runDailyReports 无已有文件时不确认直接写全部", async () => {
+	const summary = makeSummary();
+	let confirmed = false;
+	const written: string[] = [];
 	const response = await runDailyReports(
-		"daily 2026-07-08 到 2026-07-09",
-		{ hasUI: true, ui: { confirm: async () => false }, cwd: "/tmp", model: undefined, modelRegistry: { getAvailable: () => [] } } as never,
+		parseDailyCommand("2026-07-08 到 2026-07-09"),
+		{ hasUI: true, cwd: "/tmp", model: undefined, modelRegistry: { getAvailable: () => [] } } as never,
+		"zh-CN",
+		{
+			confirm: async () => { confirmed = true; return true; },
+			readConfig: async () => ({ outputDir: "/tmp/reports" }),
+			resolveModel: () => ({ source: "unavailable" as const }),
+			scanSessions: async () => ({ sessions: [] }),
+			probeDailyReportExists: async () => false,
+			buildDayReport: async () => ({ markdown: "# ok", summary, errors: [] }),
+			saveDailyReport: async (date) => { written.push(date); return { path: `/tmp/reports/${date}.md` }; },
+		},
+	);
+	assert.equal(confirmed, false);
+	assert.deepEqual(written, ["2026-07-08", "2026-07-09"]);
+	assert.doesNotMatch(response.body, /已跳过/);
+});
+
+test("runDailyReports 有已有文件且确认覆盖时写全部", async () => {
+	const summary = makeSummary();
+	const written: string[] = [];
+	const response = await runDailyReports(
+		parseDailyCommand("2026-07-08 到 2026-07-09"),
+		{ hasUI: true, cwd: "/tmp", model: undefined, modelRegistry: { getAvailable: () => [] } } as never,
+		"zh-CN",
+		{
+			confirm: async () => true,
+			readConfig: async () => ({ outputDir: "/tmp/reports" }),
+			resolveModel: () => ({ source: "unavailable" as const }),
+			scanSessions: async () => ({ sessions: [] }),
+			probeDailyReportExists: async (date) => date === "2026-07-08",
+			buildDayReport: async () => ({ markdown: "# ok", summary, errors: [] }),
+			saveDailyReport: async (date) => { written.push(date); return { path: `/tmp/reports/${date}.md` }; },
+		},
+	);
+	assert.deepEqual(written, ["2026-07-08", "2026-07-09"]);
+	assert.doesNotMatch(response.body, /已跳过/);
+});
+
+test("runDailyReports 有已有文件且拒绝覆盖时跳过覆盖项只写新建", async () => {
+	const summary = makeSummary();
+	const written: string[] = [];
+	const response = await runDailyReports(
+		parseDailyCommand("2026-07-08 到 2026-07-09"),
+		{ hasUI: true, cwd: "/tmp", model: undefined, modelRegistry: { getAvailable: () => [] } } as never,
 		"zh-CN",
 		{
 			confirm: async () => false,
 			readConfig: async () => ({ outputDir: "/tmp/reports" }),
 			resolveModel: () => ({ source: "unavailable" as const }),
 			scanSessions: async () => ({ sessions: [] }),
-			buildDayReport: async () => ({ markdown: "", summary: makeSummary(), errors: [] }),
-			saveDailyReport: async () => ({ path: "" }),
+			probeDailyReportExists: async (date) => date === "2026-07-08",
+			buildDayReport: async () => ({ markdown: "# ok", summary, errors: [] }),
+			saveDailyReport: async (date) => { written.push(date); return { path: `/tmp/reports/${date}.md` }; },
 		},
 	);
-	assert.match(response.title, /多天会话日报/);
-	assert.match(response.body, /已取消/);
+	assert.deepEqual(written, ["2026-07-09"]);
+	assert.match(response.body, /已跳过/);
+	assert.match(response.body, /2026-07-08/);
+});
+
+test("runDailyReports 有已有文件且无 UI 时跳过覆盖只写新建", async () => {
+	const summary = makeSummary();
+	const written: string[] = [];
+	const response = await runDailyReports(
+		parseDailyCommand("2026-07-08 到 2026-07-09"),
+		{ hasUI: false, cwd: "/tmp", model: undefined, modelRegistry: { getAvailable: () => [] } } as never,
+		"zh-CN",
+		{
+			readConfig: async () => ({ outputDir: "/tmp/reports" }),
+			resolveModel: () => ({ source: "unavailable" as const }),
+			scanSessions: async () => ({ sessions: [] }),
+			probeDailyReportExists: async (date) => date === "2026-07-08",
+			buildDayReport: async () => ({ markdown: "# ok", summary, errors: [] }),
+			saveDailyReport: async (date) => { written.push(date); return { path: `/tmp/reports/${date}.md` }; },
+		},
+	);
+	assert.deepEqual(written, ["2026-07-09"]);
+	assert.match(response.body, /已跳过/);
 });
 
 test("runDailyReports 部分失败仍返回成功与失败列表", async () => {
 	const summary = makeSummary();
 	const response = await runDailyReports(
-		"daily 2026-07-08 到 2026-07-10",
+		parseDailyCommand("2026-07-08 到 2026-07-10"),
 		{ hasUI: false, cwd: "/tmp", model: undefined, modelRegistry: { getAvailable: () => [] } } as never,
 		"zh-CN",
 		{

@@ -5,12 +5,12 @@
 - `doc/10-需求规格/PRD-pi-session-insights.md`：**当前基准**。research + grill 对齐后落成的需求规格（定位、形态分层、K0~K6 维度、按天 LLM 读写、配置化日报归档、测试接缝、Out of Scope）。新功能 / 实施以此为依据。
 - `doc/20-能力参考/01-context-mode会话信息分析参考.md`：对照 context-mode，论证「Pi 原生 JSONL 够丰富、可只读长出 insight 层」并给出三档借鉴分级（设计冲突 / 同思路 / 候选 K1~K6 改造点）。
 - `doc/20-能力参考/02-pi-dusage即时加载面板参考.md`：对照本地 `pi-dusage` 的先挂载 overlay、后异步刷新机制，界定 `/insights` 即时加载面板的可借范围。
-- `README.md`：当前能力（量纲 + 多维分析 + 项目化日报 + pi-dgoal 审核用量聚合）、`/insights` 命令、统计口径、项目结构、安装与验证。
+- `README.md`：当前能力（量纲 + 多维分析 + 项目化日报 + pi-dgoal 审核 / dteam worker 用量聚合）、`/insights` 命令、统计口径、项目结构、安装与验证。
 - `AGENTS.md`：给 agent 的实现边界（guardrails）、代码边界、验证要求、Out of Scope。
 - `index.ts`：Pi extension 入口，注册 `/insights` 命令 + `insights` tool。
-- `src/`：分层实现——`types.ts`（类型）/ `session-scan.ts`（异步扫描，复用自 pi-daily）/ `audit-usage.ts`（pi-dgoal 审核用量扫描与聚合）/ `locale.ts`（多语言 + locale 解析）/ `usage-rollup.ts`（K0 量纲聚合，纯函数）/ `dimensions.ts`（多维聚合 K1/K2/K3/K5）/ `time-range.ts`（时间范围解析 + LLM）/ `format.ts`（渲染）/ `insights.ts`（命令主逻辑）/ `daily-command.ts`、`daily-options.ts`、`daily-config.ts`、`daily-archive.ts`、`daily-orchestrator.ts`（日报参数、日界、配置、归档与编排）/ `day-cache.ts`（按天缓存）/ `day-report.ts`（日报生成链）/ `date-utils.ts`（本地日期字符串与自然日 TimeRange）/ `report-session-extract.ts`（日报事实提取）/ `report-model.ts`（日报模型聚合）/ `report-ai-summary.ts`（AI 项目化日报）/ `report-markdown.ts`（fallback 渲染）/ `report-labels.ts`（日报正文文案）/ `daily-ui-labels.ts`（日报命令 UI 文案）/ `panel-data.ts`（L2 overlay 面板数据加载）/ `report-redact.ts`（脱敏）/ `panel.ts`（L2 overlay 面板）。
+- `src/`：分层实现——`types.ts`（类型）/ `session-scan.ts`（异步扫描，复用自 pi-daily）/ `audit-usage.ts`（pi-dgoal 审核用量扫描与聚合）/ `dteam-usage.ts`（dteam worker 用量扫描与聚合）/ `locale.ts`（多语言 + locale 解析）/ `usage-rollup.ts`（K0 量纲聚合，纯函数）/ `dimensions.ts`（多维聚合 K1/K2/K3/K5）/ `time-range.ts`（时间范围解析 + LLM）/ `format.ts`（渲染）/ `insights.ts`（命令主逻辑）/ `daily-command.ts`、`daily-options.ts`、`daily-config.ts`、`daily-archive.ts`、`daily-orchestrator.ts`（日报参数、日界、配置、归档与编排）/ `day-cache.ts`（按天缓存）/ `day-report.ts`（日报生成链）/ `date-utils.ts`（本地日期字符串与自然日 TimeRange）/ `report-session-extract.ts`（日报事实提取）/ `report-model.ts`（日报模型聚合）/ `report-ai-summary.ts`（AI 项目化日报）/ `report-markdown.ts`（fallback 渲染）/ `report-labels.ts`（日报正文文案）/ `daily-ui-labels.ts`（日报命令 UI 文案）/ `panel-data.ts`（L2 overlay 面板数据加载）/ `report-redact.ts`（脱敏）/ `panel.ts`（L2 overlay 面板）。
 - `doc/术语表.md`：日报归属、自适应默认日界等项目术语。
-- `doc/决策档案/`：[0001](./决策档案/0001-统一使用原生select与input对话框.md)（select/input，**已被 0003 取代**）；[0002](./决策档案/0002-只读不拦截会话分析边界.md)（只读不拦截边界）；[0003](./决策档案/0003-展示层升级L2overlay面板.md)（L2 overlay 面板）；[0004](./决策档案/0004-自适应默认日报日界.md)（自适应默认日报日界）；[0005](./决策档案/0005-配置化日报归档与模型.md)（配置化日报归档与模型）。索引见 `doc/决策档案/README.md`。
+- `doc/决策档案/`：[0001](./决策档案/0001-统一使用原生select与input对话框.md)（select/input，**已被 0003 取代**）；[0002](./决策档案/0002-只读不拦截会话分析边界.md)（只读不拦截边界）；[0003](./决策档案/0003-展示层升级L2overlay面板.md)（L2 overlay 面板）；[0004](./决策档案/0004-自适应默认日报日界.md)（自适应默认日报日界）；[0005](./决策档案/0005-配置化日报归档与模型.md)（配置化日报归档与模型）；[0006](./决策档案/0006-工具结果人类可读投影.md)（工具结果人类可读投影）；[0007](./决策档案/0007-独立daily入口与归档覆盖策略.md)（独立 daily 入口与归档覆盖策略）。索引见 `doc/决策档案/README.md`。
 - `doc/30-路线图/路线地图.md`：pi-token-stats 时代路线图，**已被 PRD 取代**，保留作历史参考。
 - `package.json`：Pi package 清单与扩展加载声明。
 

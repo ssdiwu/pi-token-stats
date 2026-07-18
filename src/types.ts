@@ -104,6 +104,19 @@ export interface AuditUsageSummary {
 	byModel: Array<{ model: string; attempts: number; totalTokens: number; totalCost: number }>;
 }
 
+export interface DteamUsageSummary {
+	recordCount: number;
+	workerCount: number;
+	inputTokens: number;
+	outputTokens: number;
+	cacheReadTokens: number;
+	cacheWriteTokens: number;
+	totalTokens: number;
+	totalCost: number;
+	byModel: Array<{ model: string; responses: number; totalTokens: number; totalCost: number }>;
+	byTier: Array<{ tier: string; responses: number; totalTokens: number; totalCost: number }>;
+}
+
 export interface Report {
 	title: string;
 	body: string;
@@ -112,6 +125,7 @@ export interface Report {
 	models: ModelRollup[];
 	dimensions?: Dimensions;
 	auditUsage?: AuditUsageSummary;
+	dteamUsage?: DteamUsageSummary;
 }
 
 // 多维聚合类型（K1 项目 / K2 工具 / K3 错误 / K5 健康）

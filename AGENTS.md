@@ -2,7 +2,7 @@
 
 ## 项目一句话定位
 
-`pi-session-insights` 是一个 `Pi extension（Pi 扩展）`：**只读、不拦截**地扫描本机 `Pi session（Pi 会话）` JSONL，做多维分析聚合（量纲/项目/工具/错误/健康）+ 项目化日报，是 pi-daily 的超集。核心立论——Pi 原生 session JSONL 已足够丰富，靠"读 JSONL"即可达到竞品靠拦截才能拿到的分析深度，无需 context-mode 那套拦截税。
+`pi-session-insights` 是一个 `Pi extension（Pi 扩展）`：**只读、不拦截**地扫描本机 `Pi session（Pi 会话）` JSONL，并合并 dgoal / dteam 自有的脱敏数字 usage sidecar ledger，做多维分析聚合（量纲/项目/工具/错误/健康）+ 项目化日报，是 pi-daily 的超集；pi-daily 卸载后由本项目独立 `/daily` 命令接管每日日报。核心立论——Pi 原生 session JSONL 与生产扩展明确输出的最小数字账本已足够丰富，靠只读既有记录即可达到竞品靠拦截才能拿到的分析深度，无需 context-mode 那套拦截税。
 
 ## 先读（按顺序）
 
@@ -47,8 +47,8 @@ pi-session-insights/
 
 ## 代码边界（guardrails）
 
-- **只读不拦截**：只读 `~/.pi/agent/sessions/**/*.jsonl`，绝不修改会话文件；**绝不引入拦截层**（PreToolUse 路由 / 工具拦截 / sandbox）。这是和 context-mode 的本质分界，是本项目定位的基石。
-- **命令边界**：主入口 `/insights`（避开官方 `/session` 与 pi-daily 的 `/daily`）；同时注册 `insights` tool。
+- **只读不拦截**：只读 `~/.pi/agent/sessions/**/*.jsonl`、`audit-usage.jsonl` 与 `dteam-usage.jsonl`，绝不修改这些来源；**绝不引入拦截层**（PreToolUse 路由 / 工具拦截 / sandbox）。这是和 context-mode 的本质分界，是本项目定位的基石。
+- **命令边界**：`/insights`（数字面板，避开官方 `/session`）+ 独立 `/daily`（项目化日报，pi-daily 卸载后由本项目接管）；同时注册 `insights` 与 `daily` tool。
 - **LLM 边界**：LLM 调用仅用于项目化日报生成；数字面板视图（量纲/项目/工具/错误/健康）**绝不调 LLM**，纯算法。
 - **复用边界**：复用 pi-daily 代码只复制/重构进本项目 `src/`，不 import pi-daily 包（它是独立已发布包）。
 - **交互边界**：`/insights` 无参数 TUI 走 L2 overlay 面板（ADR 0003）；带参数走原生 select/input。旧 ADR 0001 已失效（被 0003 取代）。非 TUI 模式（`-p`/JSON/RPC）退化为纯文本。

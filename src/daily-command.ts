@@ -11,12 +11,29 @@ export interface DailyCommandRequest {
 	expression: string;
 }
 
-export function isDailyCommand(value: string | undefined): boolean {
-	return /^daily(?:\s|$)/i.test(value?.trim() || "");
+export interface DailyToolParams {
+	date?: string;
+	range?: string;
+	projectCurrent?: boolean;
+	dayStart?: string;
+}
+
+/**
+ * 把 daily tool 的结构化参数合并成 DailyCommandRequest。
+ * date 优先于 range；projectCurrent/dayStart 直接映射。
+ * 校验（dayStart 与日期互斥等）由 resolveDailyCommandWindows 负责。
+ */
+export function buildDailyRequest(params: DailyToolParams): DailyCommandRequest {
+	return {
+		dayStart: params.dayStart?.trim() || undefined,
+		projectCurrent: Boolean(params.projectCurrent),
+		expression: params.date?.trim() || params.range?.trim() || "",
+	};
 }
 
 export function parseDailyCommand(value: string): DailyCommandRequest {
-	const tokens = value.trim().split(/\s+/).slice(1);
+	const trimmed = value.trim();
+	const tokens = trimmed ? trimmed.split(/\s+/) : [];
 	const expression: string[] = [];
 	let dayStart: string | undefined;
 	let projectCurrent = false;

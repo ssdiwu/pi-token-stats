@@ -9,6 +9,7 @@
 | `types.ts` | 基础类型：session JSONL、量纲、多维、日报模型 |
 | `session-scan.ts` | 异步扫描本地 `~/.pi/agent/sessions/**/*.jsonl`，支持按文件修改时间过滤 |
 | `audit-usage.ts` | 只读扫描 pi-dgoal 脱敏审核用量，并按时间范围去重聚合 |
+| `dteam-usage.ts` | 只读扫描 dteam worker 脱敏用量，并按时间、worker、模型与实际档位去重聚合 |
 | `usage-rollup.ts` | K0 消耗量纲聚合 |
 | `dimensions.ts` | K1/K2/K3/K5 多维聚合 |
 | `time-range.ts` | `/insights` 时间范围解析 |
@@ -47,6 +48,6 @@
 
 ## 约定
 
-- 数字视图（今天消耗 / 范围洞察）不调 LLM。
+- 数字视图（今天消耗 / 范围洞察）不调 LLM；session、pi-dgoal audit 与 dteam worker 用量均只读本机记录。
 - 日报正文只读本地 session，不上传原始长文本，只发送脱敏后的结构化事实。
 - 历史日报优先命中缓存；今天日报由显式命令触发生成。

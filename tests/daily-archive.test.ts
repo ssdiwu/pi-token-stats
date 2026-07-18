@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { saveDailyReport } from "../src/daily-archive.ts";
+import { probeDailyReportExists, saveDailyReport } from "../src/daily-archive.ts";
 import { getDailyConfigPath, readDailyConfig } from "../src/daily-config.ts";
 
 test("配置文件覆盖默认归档目录", async () => {
@@ -27,6 +27,18 @@ test("同日期日报稳定覆盖配置目录文件", async () => {
 		assert.equal(first.overwritten, false);
 		assert.equal(second.overwritten, true);
 		assert.equal(await fs.readFile(second.path, "utf8"), "# v2");
+	} finally {
+		await fs.rm(outputDir, { recursive: true, force: true });
+	}
+});
+
+test("probeDailyReportExists 反映文件存在性且不写入", async () => {
+	const outputDir = await fs.mkdtemp(path.join(os.tmpdir(), "psi-daily-probe-"));
+	try {
+		assert.equal(await probeDailyReportExists("2026-07-10", outputDir), false);
+		await saveDailyReport("2026-07-10", "# v1", outputDir);
+		assert.equal(await probeDailyReportExists("2026-07-10", outputDir), true);
+		assert.equal(await probeDailyReportExists("2026-07-11", outputDir), false);
 	} finally {
 		await fs.rm(outputDir, { recursive: true, force: true });
 	}

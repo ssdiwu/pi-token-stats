@@ -35,7 +35,7 @@ Pi 已经把每次会话的结构化事件完整写进本地 session JSONL（cwd
 
 ### 定位与边界
 
-- **只读不拦截**：只读 `~/.pi/agent/sessions/**/*.jsonl`，不拦截工具调用、不做 sandbox、不做 session continuity 恢复（Pi 已有原生 compaction / `/session` / `/resume`）。详见参考文档 §3.1 设计冲突清单。
+- **只读不拦截**：只读 `~/.pi/agent/sessions/**/*.jsonl`，并可合并已安装扩展自行生成的脱敏数字 sidecar ledger（旁路账本）；不拦截工具调用、不做 sandbox、不做 session continuity 恢复（Pi 已有原生 compaction / `/session` / `/resume`）。sidecar 只补该扩展原本不会进入主 session 的 usage，不授权 insights 反向接管执行。详见参考文档 §3.1 设计冲突清单。
 - **超集策略**：覆盖竞品（`@observal/pi-insights` / `@mrclrchtr/supi-insights` / `@tmustier/pi-usage-extension` 等）的 usage insights 能力 + pi-daily 的叙事日报，不强求差异化。
 - **与 pi-daily 的关系**：新包是 pi-daily 超集。daily 保留兼容已发布用户，不投入新功能，待新包成熟后引导迁移、最终吸收。
 
@@ -56,7 +56,7 @@ Pi session JSONL 已原生支持，纯算法可算（已在真实会话文件核
 - K5 上下文健康：`compaction` entry 的 `tokensBefore` → 压缩频率 / 压缩量。
 - K6 工作流画像：`custom` entry 的 `customType`（如 `dgoal-state`）→ 工作流使用强度。
 
-**硬边界**：git 操作结构化事件、显式 user decision、subagent delegation 事件——Pi JSONL 不直接记录，要拿这些深度就得引入拦截层，落入"不做"。只读路线的能力上限即此。
+**硬边界**：git 操作结构化事件、显式 user decision、通用 subagent delegation 事件——Pi JSONL 不直接记录，要拿这些深度就得引入拦截层，落入"不做"。允许 dgoal / dteam 生产者提供其自有脱敏数字 usage sidecar，但不据此扩张为通用 delegation 分析或拦截层。
 
 ### 分析深度（按天 LLM 读写）
 

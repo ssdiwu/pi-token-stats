@@ -7,6 +7,8 @@ import { Type } from "typebox";
 
 import { resolveUiLocale, t } from "./src/locale.ts";
 import { buildInteractiveReport, buildReportForRequest } from "./src/insights.ts";
+import { parseDailyCommand, buildDailyRequest, type DailyToolParams } from "./src/daily-command.ts";
+import { runDailyReports } from "./src/daily-orchestrator.ts";
 import { loadInsightsPanelData } from "./src/panel-data.ts";
 import { InsightsPanel } from "./src/panel.ts";
 import type { UiLocale } from "./src/types.ts";
@@ -18,11 +20,26 @@ const InsightsParams = Type.Object({
 	label: Type.Optional(Type.String({ description: "Display label for the selected range, e.g. 昨天到今天" })),
 });
 
+const DailyParams = Type.Object({
+	date: Type.Optional(Type.String({ description: "Single day for the report, e.g. 2026-06-17" })),
+	range: Type.Optional(Type.String({ description: "Natural-language range, e.g. 昨天, 本周, 2026-06-10 到 2026-06-17" })),
+	projectCurrent: Type.Optional(Type.Boolean({ description: "Limit the report to the current project (cwd)" })),
+	dayStart: Type.Optional(Type.String({ description: "Custom day boundary HH:mm, e.g. 03:00 (cannot combine with date or range)" })),
+});
+
 function renderInsightsResult(result: { content?: Array<{ type?: string; text?: string }> }, options: { expanded: boolean; isPartial: boolean }, theme: any): Text {
 	if (options.isPartial) return new Text(theme.fg("warning", "正在生成会话洞察..."), 0, 0);
 	const text = result.content?.find((item) => item.type === "text")?.text ?? "";
 	if (options.expanded) return new Text(theme.fg("toolOutput", text), 0, 0);
 	const title = text.split("\n", 1)[0] || "Session insights";
+	return new Text(theme.fg("success", `${title} (Ctrl+O to expand)`), 0, 0);
+}
+
+function renderDailyResult(result: { content?: Array<{ type?: string; text?: string }> }, options: { expanded: boolean; isPartial: boolean }, theme: any): Text {
+	if (options.isPartial) return new Text(theme.fg("warning", "正在生成日报..."), 0, 0);
+	const text = result.content?.find((item) => item.type === "text")?.text ?? "";
+	if (options.expanded) return new Text(theme.fg("toolOutput", text), 0, 0);
+	const title = text.split("\n", 1)[0] || "Daily report";
 	return new Text(theme.fg("success", `${title} (Ctrl+O to expand)`), 0, 0);
 }
 
@@ -57,6 +74,14 @@ async function showInsightsPanel(ctx: ExtensionCommandContext | ExtensionContext
 		errorTitle: t(locale, "title", { range: t(locale, "rangeToday") }),
 		errorBody: (message) => t(locale, "panelLoadFailed", { message }),
 	}, tui, theme, () => done(undefined)), { overlay: true });
+}
+
+async function showReport(ctx: ExtensionCommandContext | ExtensionContext, title: string, body: string, locale: UiLocale): Promise<void> {
+	if (!ctx.hasUI || ctx.mode !== "tui") {
+		console.log(`${title}\n\n${body}`);
+		return;
+	}
+	await ctx.ui.select(`${title}\n\n${body}`, [t(locale, "choiceExit")]);
 }
 
 export default function sessionInsightsExtension(pi: ExtensionAPI) {
@@ -98,6 +123,40 @@ export default function sessionInsightsExtension(pi: ExtensionAPI) {
 			}
 			const report = await buildInteractiveReport(args, ctx, locale);
 			await showDialog(ctx, report.title, report.body, locale);
+		},
+	});
+
+	pi.registerTool({
+		name: "daily",
+		label: "Daily Report",
+		description: "Generate a project-grouped daily work report for a date or range and archive it to disk. Defaults to today.",
+		promptSnippet: "Generate a project-grouped daily report summarizing the day's work",
+		promptGuidelines: [
+			"Use daily when the user asks to generate a daily report, summarize the day's work, or write up what happened today or on a specific date.",
+			"Pass daily.date as YYYY-MM-DD for a specific day, or daily.range for a natural-language range like 本周; omit both for today.",
+			"Set daily.projectCurrent to true to limit the report to the current project.",
+		],
+		parameters: DailyParams,
+		async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
+			const locale = resolveUiLocale(pi, ctx);
+			const report = await runDailyReports(buildDailyRequest(params as DailyToolParams), ctx, locale);
+			return {
+				content: [{ type: "text", text: `${report.title}\n\n${report.body}` }],
+				details: { locale, projectCurrent: params.projectCurrent },
+			};
+		},
+		renderResult(result, options, theme) {
+			return renderDailyResult(result, options, theme);
+		},
+	});
+
+	pi.registerCommand("daily", {
+		description: "Generate a project-grouped daily work report and archive it. Defaults to today; supports a date, range, --day-start HH:mm and --project current.",
+		handler: async (args, ctx) => {
+			const locale = resolveUiLocale(pi, ctx);
+			const request = parseDailyCommand(args ?? "");
+			const report = await runDailyReports(request, ctx, locale);
+			await showReport(ctx, report.title, report.body, locale);
 		},
 	});
 }
