@@ -2,9 +2,10 @@
 // 只读扫描 ~/.pi/agent/sessions/**/*.jsonl，容错解析坏行，收集错误。
 // 绝不修改会话文件。
 
-import { promises as fs } from "node:fs";
+import { createReadStream, promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { createInterface } from "node:readline";
 
 import type { ParsedSession, ScanError, ScanSessionsOptions, ScanSessionsResult, SessionEntry, SessionFile, SessionHeader } from "./types.ts";
 
@@ -66,32 +67,60 @@ function toSessionEntry(value: unknown): SessionEntry {
 	return value && typeof value === "object" ? (value as SessionEntry) : {};
 }
 
-export function parseSessionJsonl(content: string): ParsedSession {
-	const entries: SessionEntry[] = [];
-	const errors: ScanError[] = [];
-	const lines = String(content).split(/\r?\n/);
-
-	for (let index = 0; index < lines.length; index += 1) {
-		const line = lines[index].trim();
-		if (!line) {
-			continue;
-		}
-		try {
-			entries.push(toSessionEntry(JSON.parse(line)));
-		} catch (error) {
-			errors.push({ line: index + 1, error: error instanceof Error ? error.message : String(error) });
-		}
+function entryTimestamp(entry: SessionEntry): number {
+	const messageTimestamp = entry.message?.timestamp;
+	if (typeof messageTimestamp === "number" && Number.isFinite(messageTimestamp) && messageTimestamp > 0) return messageTimestamp;
+	if (messageTimestamp) {
+		const parsedMessageTimestamp = new Date(messageTimestamp).getTime();
+		if (Number.isFinite(parsedMessageTimestamp)) return parsedMessageTimestamp;
 	}
+	const outerTimestamp = entry.timestamp;
+	if (typeof outerTimestamp === "number" && Number.isFinite(outerTimestamp) && outerTimestamp > 0) return outerTimestamp;
+	const parsedOuterTimestamp = Date.parse((outerTimestamp as string) ?? "");
+	return Number.isFinite(parsedOuterTimestamp) ? parsedOuterTimestamp : 0;
+}
 
+function keepEntry(entry: SessionEntry, range?: ScanSessionsOptions["entryRange"]): boolean {
+	if (!range || entry.type === "session" || entry.type === "session_info") return true;
+	const timestamp = entryTimestamp(entry);
+	return timestamp >= range.since && timestamp < range.until;
+}
+
+function parseLine(line: string, lineNumber: number, entries: SessionEntry[], errors: ScanError[], range?: ScanSessionsOptions["entryRange"]): void {
+	const trimmed = line.trim();
+	if (!trimmed) return;
+	try {
+		const entry = toSessionEntry(JSON.parse(trimmed));
+		if (keepEntry(entry, range)) entries.push(entry);
+	} catch (error) {
+		errors.push({ line: lineNumber, error: error instanceof Error ? error.message : String(error) });
+	}
+}
+
+function buildParsedSession(entries: SessionEntry[], errors: ScanError[]): ParsedSession {
 	const headerEntry = entries.find((entry) => entry?.type === "session") || null;
 	const header = headerEntry ? (headerEntry as SessionHeader) : null;
 	return { header, entries, errors };
 }
 
-export async function readSessionFile(file: string): Promise<SessionFile> {
-	const content = await fs.readFile(file, "utf8");
-	const parsed = parseSessionJsonl(content);
-	return { file, ...parsed };
+export function parseSessionJsonl(content: string, range?: ScanSessionsOptions["entryRange"]): ParsedSession {
+	const entries: SessionEntry[] = [];
+	const errors: ScanError[] = [];
+	const lines = String(content).split(/\r?\n/);
+	for (let index = 0; index < lines.length; index += 1) parseLine(lines[index], index + 1, entries, errors, range);
+	return buildParsedSession(entries, errors);
+}
+
+export async function readSessionFile(file: string, range?: ScanSessionsOptions["entryRange"]): Promise<SessionFile> {
+	const entries: SessionEntry[] = [];
+	const errors: ScanError[] = [];
+	const lines = createInterface({ input: createReadStream(file, { encoding: "utf8" }), crlfDelay: Infinity });
+	let lineNumber = 0;
+	for await (const line of lines) {
+		lineNumber += 1;
+		parseLine(line, lineNumber, entries, errors, range);
+	}
+	return { file, ...buildParsedSession(entries, errors) };
 }
 
 const SCAN_CONCURRENCY = 8;
@@ -101,16 +130,18 @@ interface FileScanResult {
 	errors: ScanError[];
 }
 
-async function scanFile(file: string): Promise<FileScanResult> {
+async function scanFile(file: string, range?: ScanSessionsOptions["entryRange"]): Promise<FileScanResult> {
 	try {
-		const session = await readSessionFile(file);
+		const session = await readSessionFile(file, range);
 		return { session, errors: (session.errors || []).map((parseError) => ({ file, ...parseError })) };
 	} catch (error) {
 		return { errors: [{ file, line: 0, error: error instanceof Error ? error.message : String(error) }] };
 	}
 }
 
-export async function scanSessions(options: ScanSessionsOptions = {}): Promise<ScanSessionsResult> {
+let scanTail = Promise.resolve();
+
+async function scanSessionsUnlocked(options: ScanSessionsOptions): Promise<ScanSessionsResult> {
 	const sessionRoot = options.sessionRoot || getDefaultSessionRoot();
 	const discoveredFiles = options.files || (await findSessionFiles(sessionRoot));
 	const files = options.modifiedSince === undefined ? discoveredFiles : await filterFilesModifiedSince(discoveredFiles, options.modifiedSince);
@@ -121,7 +152,7 @@ export async function scanSessions(options: ScanSessionsOptions = {}): Promise<S
 		for (;;) {
 			const index = nextIndex++;
 			if (index >= files.length) return;
-			results[index] = await scanFile(files[index]);
+			results[index] = await scanFile(files[index], options.entryRange);
 		}
 	}));
 
@@ -133,4 +164,16 @@ export async function scanSessions(options: ScanSessionsOptions = {}): Promise<S
 	}
 
 	return { sessionRoot, files, sessions, errors };
+}
+
+export async function scanSessions(options: ScanSessionsOptions = {}): Promise<ScanSessionsResult> {
+	const previous = scanTail;
+	let release!: () => void;
+	scanTail = new Promise<void>((resolve) => { release = resolve; });
+	await previous;
+	try {
+		return await scanSessionsUnlocked(options);
+	} finally {
+		release();
+	}
 }

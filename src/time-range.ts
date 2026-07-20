@@ -32,6 +32,42 @@ function isDateInput(value: string): boolean {
 	return /^\d{4}[\/-]\d{1,2}[\/-]\d{1,2}$/.test(value.trim());
 }
 
+function parseMonthDayInput(value: string, year: number): Date | undefined {
+	const match = value.trim().match(/^(\d{1,2})月(\d{1,2})日$/);
+	if (!match) return undefined;
+	const month = Number(match[1]);
+	const day = Number(match[2]);
+	const date = new Date(year, month - 1, day);
+	return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day ? date : undefined;
+}
+
+function normalizedLocalDateLabel(date: Date): string {
+	return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function parseMonthDayRange(input: string, now: Date): TimeRange | undefined {
+	const match = input.match(/^(\d{1,2})月(\d{1,2})日\s*(?:到|至|~|～|—|–)\s*(\d{1,2})月(\d{1,2})日$/);
+	if (!match) return undefined;
+	const start = parseMonthDayInput(`${match[1]}月${match[2]}日`, now.getFullYear());
+	let end = parseMonthDayInput(`${match[3]}月${match[4]}日`, now.getFullYear());
+	if (!start || !end) throw new Error(`invalid date range: ${input}`);
+	if (end < start) {
+		end = parseMonthDayInput(`${match[3]}月${match[4]}日`, now.getFullYear() + 1);
+		if (!end) throw new Error(`invalid date range: ${input}`);
+	}
+	return {
+		label: `${normalizedLocalDateLabel(start)} ~ ${normalizedLocalDateLabel(end)}`,
+		since: start.getTime(),
+		until: end.getTime() + 24 * 60 * 60 * 1000,
+	};
+}
+
+function isValidLocalDate(value: string): boolean {
+	const match = value.trim().match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})$/);
+	if (!match) return false;
+	const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+	return date.getFullYear() === Number(match[1]) && date.getMonth() === Number(match[2]) - 1 && date.getDate() === Number(match[3]);
+}
 export function parseRange(input: string | undefined, locale: UiLocale, now = new Date()): TimeRange | "session" {
 	const rawInput = (input ?? "").trim();
 	const raw = rawInput.toLowerCase();
@@ -58,6 +94,9 @@ export function parseRange(input: string | undefined, locale: UiLocale, now = ne
 		return { label: t(locale, "rangeYesterday"), since: start.getTime(), until: todayStart.getTime() };
 	}
 
+	const monthDayRange = parseMonthDayRange(rawInput, now);
+	if (monthDayRange) return monthDayRange;
+
 	const namedRange = parseNamedRange(rawInput, locale, now);
 	if (namedRange) return namedRange;
 
@@ -74,6 +113,7 @@ export function parseRange(input: string | undefined, locale: UiLocale, now = ne
 
 	const absolute = rawInput.match(/(\d{4}[\/-]\d{1,2}[\/-]\d{1,2})(?:\s*(?:到|至|~|～|—|–)\s*(\d{4}[\/-]\d{1,2}[\/-]\d{1,2}))?/i);
 	if (absolute) {
+		if (!isValidLocalDate(absolute[1]) || (absolute[2] && !isValidLocalDate(absolute[2]))) throw new Error(`invalid date range: ${rawInput}`);
 		const start = parseLocalDate(absolute[1]);
 		const end = absolute[2] ? parseLocalDate(absolute[2]) : new Date(start);
 		end.setDate(end.getDate() + 1);
@@ -110,6 +150,14 @@ function parseRangeBoundary(input: string, side: "start" | "end", locale: UiLoca
 	}
 	if (["now", "现在", "現在", "当前", "當前"].includes(normalized)) {
 		return { label: side === "start" ? raw : normalizeBoundaryLabel(raw), timestamp: now.getTime() };
+	}
+	const monthDay = parseMonthDayInput(raw, now.getFullYear());
+	if (monthDay) {
+		const label = normalizedLocalDateLabel(monthDay);
+		if (side === "start") return { label, timestamp: monthDay.getTime() };
+		const end = new Date(monthDay);
+		end.setDate(end.getDate() + 1);
+		return { label, timestamp: end.getTime() };
 	}
 	if (isDateInput(raw)) {
 		const date = parseLocalDate(raw);

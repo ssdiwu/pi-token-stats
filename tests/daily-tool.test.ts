@@ -33,4 +33,7 @@ test("insights 与 daily 是两个独立 tool，insights 不含 daily 参数", (
 	assert.ok(names.includes("daily"));
 	const insights = tools.find((t) => t.name === "insights");
 	assert.ok(!Object.keys(insights.parameters.properties).includes("date"), "insights tool 不应有 daily 的 date 参数");
+	assert.match(insights.promptGuidelines.join("\n"), /Do not use insights to generate daily reports/);
+	const daily = tools.find((t) => t.name === "daily");
+	assert.match(daily.promptGuidelines.join("\n"), /one file per day/);
 });

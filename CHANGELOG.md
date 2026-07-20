@@ -4,6 +4,12 @@ All notable changes to `pi-session-insights` are documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- **范围扫描内存峰值**：`/insights` 与 `/daily` 先筛选候选文件、逐行读取并仅保留目标范围事件，同时串行化并发扫描，避免多次范围查询叠加全量 JSONL 导致 Node.js OOM。
+- **日期范围解析**：中文 `7月18日到7月19日` 不再误判为“最近 18 天”；`/daily` 支持按当前年份解析 `0718 和 0719` 形式的紧凑月日范围。
+- **日报工具路由**：明确数字洞察与日报生成职责；多日请求一次调用 `daily`，逐日归档且只返回批次摘要。
+
 ## [0.2.0] - 2026-07-18
 
 ### Added

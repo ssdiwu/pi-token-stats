@@ -1,5 +1,5 @@
-// /insights daily 的编排层：把 UI 确认、配置读取、模型选择、扫描、批量生成、归档、错误隔离封装成单一入口。
-// 目标：insights.ts 只判断“这是不是日报请求”，具体日报流程交给这里。
+// /daily 的编排层：把 UI 确认、配置读取、模型选择、扫描、批量生成、归档、错误隔离封装成单一入口。
+// 目标：index.ts 只负责命令与 tool 注册，具体日报流程交给这里。
 
 import type { ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
@@ -11,7 +11,7 @@ import { emptyStats } from "./usage-rollup.ts";
 import { dailyUiLabelsFor } from "./daily-ui-labels.ts";
 import { reportLabelsFor } from "./report-labels.ts";
 import { scanSessions } from "./session-scan.ts";
-import type { DaySummary, Report, SessionFile, UiLocale } from "./types.ts";
+import type { DaySummary, Report, ScanSessionsOptions, SessionFile, UiLocale } from "./types.ts";
 
 export interface DailyResult {
 	date: string;
@@ -30,7 +30,7 @@ export interface DailyOrchestratorDeps {
 	confirm(title: string, body: string): Promise<boolean>;
 	readConfig(): Promise<DailyConfig>;
 	resolveModel<T extends { provider?: string; id?: string }>(ctx: { model?: T; modelRegistry: { getAvailable: () => T[] } }, config: { dailyModel?: string }): import("./daily-config.ts").DailyModelSelection<T>;
-	scanSessions(): Promise<{ sessions: SessionFile[] }>;
+	scanSessions(options?: ScanSessionsOptions): Promise<{ sessions: SessionFile[] }>;
 	buildDayReport(date: string, sessions: SessionFile[], locale: UiLocale, options: Parameters<typeof buildDayReport>[3]): Promise<{ markdown: string; summary: DaySummary; errors: string[] }>;
 	saveDailyReport(date: string, markdown: string, outputDir: string): Promise<{ path: string }>;
 	probeDailyReportExists(date: string, outputDir: string): Promise<boolean>;
@@ -64,7 +64,11 @@ export async function runDailyReports(
 	const selections = await resolveDailyCommandWindows(request, ctx, locale);
 	const config = await readConfig();
 	const modelSelection = resolveModel(ctx, config);
-	const { sessions } = await scan();
+	const scanRange = {
+		since: Math.min(...selections.map((selection) => selection.range.since)),
+		until: Math.max(...selections.map((selection) => selection.range.until)),
+	};
+	const { sessions } = await scan({ entryRange: scanRange });
 
 	// 探测哪些日期已有归档文件，决定是否需要覆盖确认。
 	const existingDates = new Set<string>();

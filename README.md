@@ -38,6 +38,7 @@
 /daily                       # 今天日报
 /daily 昨天
 /daily 2026-06-17
+/daily 0718 和 0719           # MMDD 范围按当前年份解析
 /daily 2026-06-10 到 2026-06-17
 /daily 本周
 /daily --project current     # 限定当前项目
@@ -46,13 +47,13 @@
 
 > `/insights daily` 已废弃；pi-daily 卸载后由本项目 `/daily` 接管每日日报。
 
-日报自动归档到 `~/.pi/agent/pi-session-insights.json` 的 `reportOutputDir`；未配置时写 `~/Documents/pi-daily-reports/YYYY-MM-DD.md`。**归档覆盖策略**：无已有文件直接写入；有已有文件时，TUI 模式一次确认是否覆盖（多天合并确认），非交互模式（`-p`/JSON/RPC）默认跳过已有文件并在结果提示。`dailyModel` 可选用 `provider/model-id:thinking` 指定日报模型；不可用时会提示并回退当前会话模型，当前模型也不可用时使用本地 Markdown fallback。
+日报自动归档到 `~/.pi/agent/pi-session-insights.json` 的 `reportOutputDir`；未配置时写 `~/Documents/pi-daily-reports/YYYY-MM-DD.md`。多日范围会逐日写入独立文件，命令或 tool 结果只显示生成数量与归档路径，不展开各日报正文。**归档覆盖策略**：无已有文件直接写入；有已有文件时，TUI 模式一次确认是否覆盖（多天合并确认），非交互模式（`-p`/JSON/RPC）默认跳过已有文件并在结果提示。`dailyModel` 可选用 `provider/model-id:thinking` 指定日报模型；不可用时会提示并回退当前会话模型，当前模型也不可用时使用本地 Markdown fallback。
 
 同时注册两个 tool（工具），agent 可在自然语言对话中调用：`insights`（读 token/cost 消耗，优先传结构化 `since/until`）与 `daily`（生成项目化日报，传 `date`/`range`/`projectCurrent`）。例如你问"最近 5 小时 token 花了多少？"时 agent 调 `insights`；问"生成今天的日报"或"总结今天的工作"时 agent 调 `daily`。
 
 ## UI 行为
 
-- **TUI 模式**：`/insights` 无参数会立即打开带加载状态的 L2 overlay 交互面板（第 1 页今天消耗 / 第 2 页昨天日报预览，见 ADR 0003），再异步读取数据。数字页只扫描今天有写入的 session 文件；日报页只读缓存并限制行数。完整日报请运行 `/daily`。带参数（如 `/insights 最近5小时`）走原生 select/input 提问式对话框。
+- **TUI 模式**：`/insights` 无参数会立即打开带加载状态的 L2 overlay 交互面板（第 1 页今天消耗 / 第 2 页昨天日报预览，见 ADR 0003），再异步读取数据。数字页只保留今天范围内的 session 事件；日报页只读缓存并限制行数。完整日报请运行 `/daily`。带参数（如 `/insights 最近5小时`）走原生 select/input 提问式对话框。
 - **非 TUI 模式**（`pi -p` / JSON / RPC）：输出纯文本，方便脚本和测试验证。
 - 日报标签与 AI 输出跟随 `pi-di18n` 的当前 locale（语言环境）；支持简体中文、繁体中文、日语、韩语、德语、法语、西班牙语、葡萄牙语、俄语、阿拉伯语和英语。
 - 时间范围解析：先用当前模型理解，失败后回退本地规则解析。
@@ -60,7 +61,7 @@
 ## 统计口径
 
 - 默认 `/insights` = 今天本机所有 session 的统计。
-- 时间范围统计扫描 `~/.pi/agent/sessions` 下所有 JSONL（异步、容错解析）。
+- 时间范围统计逐行读取 session JSONL，只保留范围内事件与必要元数据；扫描保持异步、容错，并串行化多个外部扫描请求以控制内存峰值。
 - 时间窗口按 assistant message（模型回复）的实际 timestamp（时间戳）聚合 token 与 cost；同时只读合并 `~/.pi/agent/audit-usage.jsonl` 中 pi-dgoal 的脱敏审核用量，以及 `~/.pi/agent/dteam-usage.jsonl` 中 dteam in-memory worker 的脱敏用量（都按 `dedupKey` 去重）。
 - 模型维度按 `provider/model`（供应商/模型）聚合；即使 model 同名，只要 provider 不同也会分开统计。
 - `/insights 当前会话` 使用 `ctx.sessionManager.getBranch()` 统计 active branch，并按 `parentSessionId` 合并该主会话所属的 dteam worker 用量。
@@ -76,6 +77,8 @@
 - 单日：`YYYY-MM-DD`、`YYYY/MM/DD`
 - 日期范围：`YYYY-MM-DD 到 YYYY-MM-DD`、`YYYY/MM/DD 到 YYYY/MM/DD`
 - 命名范围：`昨天到今天`（结束边界为当前时刻）、`昨天到现在`
+- 中文月日范围：`7月18日到7月19日`（按当前年份解析）
+- `/daily` 紧凑月日范围：`0718 和 0719`（按当前年份解析）
 - 当前会话 / session
 
 当模型与本地规则都无法识别时，会回退到今天，并在标题里保留原始输入提示。

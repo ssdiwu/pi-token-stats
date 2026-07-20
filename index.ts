@@ -95,6 +95,7 @@ export default function sessionInsightsExtension(pi: ExtensionAPI) {
 			"Prefer passing insights.since and insights.until as absolute local timestamps plus insights.label when you can infer the exact range.",
 			"Use insights.range for current session requests or when you need the extension's built-in fallback parsing.",
 			"If the user does not specify a time range, use insights with no range; it defaults to today.",
+			"Do not use insights to generate daily reports; call daily once with the full date range instead.",
 		],
 		parameters: InsightsParams,
 		async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
@@ -135,6 +136,7 @@ export default function sessionInsightsExtension(pi: ExtensionAPI) {
 			"Use daily when the user asks to generate a daily report, summarize the day's work, or write up what happened today or on a specific date.",
 			"Pass daily.date as YYYY-MM-DD for a specific day, or daily.range for a natural-language range like 本周; omit both for today.",
 			"Set daily.projectCurrent to true to limit the report to the current project.",
+			"For multiple days, pass one range; daily archives one file per day and returns only a batch summary.",
 		],
 		parameters: DailyParams,
 		async execute(_toolCallId, params, _signal, _onUpdate, ctx) {

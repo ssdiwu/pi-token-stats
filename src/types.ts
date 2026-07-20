@@ -54,6 +54,7 @@ export interface ScanSessionsOptions {
 	sessionRoot?: string;
 	files?: string[];
 	modifiedSince?: number;
+	entryRange?: Pick<TimeRange, "since" | "until">;
 }
 
 export interface ScanSessionsResult {

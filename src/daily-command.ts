@@ -64,6 +64,22 @@ function parseDate(value: string): Date | null {
 	return date.getFullYear() === Number(match[1]) && date.getMonth() === Number(match[2]) - 1 && date.getDate() === Number(match[3]) ? date : null;
 }
 
+function parseCompactDateRange(value: string, year: number): [string, string] | undefined {
+	const match = value.match(/(?:^|\D)(\d{2})(\d{2})\s*(?:和|与|到|至|~|～|—|–)\s*(\d{2})(\d{2})(?:\D|$)/);
+	if (!match) return undefined;
+	const start = `${year}-${match[1]}-${match[2]}`;
+	let end = `${year}-${match[3]}-${match[4]}`;
+	const startDate = parseDate(start);
+	let endDate = parseDate(end);
+	if (!startDate || !endDate) throw new Error(`invalid report date: ${value}`);
+	if (endDate < startDate) {
+		end = `${year + 1}-${match[3]}-${match[4]}`;
+		endDate = parseDate(end);
+		if (!endDate) throw new Error(`invalid report date: ${value}`);
+	}
+	return [start, end];
+}
+
 function selectionForDate(date: string): DailyWindowSelection {
 	return { date, range: createDailyTimeRange(date) };
 }
@@ -90,6 +106,9 @@ export async function resolveDailyCommandWindows(request: DailyCommandRequest, c
 		return [resolveExplicitDayStartWindow(now, request.dayStart)];
 	}
 	if (!request.expression) return [resolveDefaultDailyWindow(now)];
+
+	const compactDates = parseCompactDateRange(request.expression, now.getFullYear());
+	if (compactDates) return expandDailyDateRange(compactDates[0], compactDates[1]).map(selectionForDate);
 
 	const dates = request.expression.match(/^(\d{4}[/-]\d{2}[/-]\d{2})(?:\s*(?:到|至|~|～|—|–)\s*(\d{4}[/-]\d{2}[/-]\d{2}))?$/);
 	if (!dates && /\d{4}(?:[/-]\d{1,2})?(?:[/-]\d{1,2})?/.test(request.expression)) throw new Error(`invalid report date: ${request.expression}`);

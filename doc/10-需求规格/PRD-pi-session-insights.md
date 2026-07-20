@@ -15,7 +15,7 @@ Pi 已经把每次会话的结构化事件完整写进本地 session JSONL（cwd
 
 ## Solution
 
-新包 `pi-session-insights`，单入口命令 `/insights`，在 Pi 原生 TUI 内开一个交互面板（L2 overlay），面板内分视图承载"会话信息"的两类产物：
+新包 `pi-session-insights`，提供独立 `/insights` 数字洞察命令与 `/daily` 日报命令，并在 Pi 原生 TUI 内为 `/insights` 开一个交互面板（L2 overlay），承载“会话信息”的两类产物：
 
 - **数字视图**（即时、纯算法）：量纲 / 项目排行 / 工具画像 / 错误情报 / 上下文健康。对标竞品的 usage insights，但走轻量纯算法路线，不烧 LLM。
 - **日报视图**（叙事、过 LLM）：基于按天摘要生成当日工作叙事，并自动归档到配置目录。
@@ -61,9 +61,10 @@ Pi session JSONL 已原生支持，纯算法可算（已在真实会话文件核
 ### 分析深度（按天 LLM 读写）
 
 - **轻量起步**：不做 observal 式 per-session LLM facet 抽取。
-- **按天读写**：以"天"为单位做 LLM 读写，每天产出一个结构化摘要（目标 / 产出 / 异常等），缓存本地。跨天聚合时主代理读"天摘要"而非会话原文，避免一次性吞超量内容。
-- **数字面板视图不过 LLM**（纯算法）；只有日报视图过 LLM。
-- 需要**按天粒度缓存设施**（类似竞品 facet 缓存，但粒度是"天"而非"会话"），这是基线设施、非可选。
+- **按天读写**：以“天”为单位做 LLM 读写，每天产出一个结构化摘要（目标 / 产出 / 异常等），缓存本地。跨天聚合时主代理读“天摘要”而非会话原文，避免一次性吞超量内容。
+- **数字面板视图不过 LLM**（纯算法）；只有日报生成过 LLM。
+- **范围扫描低内存约束**：按时间范围逐行读取 session JSONL，只保留范围内事件与必要 session 元数据；多个外部扫描请求串行化，避免并行全量读取造成堆峰值。
+- 需要**按天粒度缓存设施**（类似竞品 facet 缓存，但粒度是“天”而非“会话”），这是基线设施、非可选。
 
 ### 配置化自动归档
 
@@ -80,7 +81,7 @@ Pi session JSONL 已原生支持，纯算法可算（已在真实会话文件核
 
 ### 命名与仓库
 
-- 包名 `pi-session-insights`（npm 已确认未占用），命令 `/insights`（避开官方 `/session`、避开 pi-daily `/daily`）。
+- 包名 `pi-session-insights`（npm 已确认未占用），命令 `/insights` + `/daily`（避开官方 `/session`；日报不再复用已废弃的 `/insights daily` 子命令）。
 - 代码基底：从零搭骨架，复用 pi-daily 技术资产（复制 / 重构其 `session-scan` / `session-extract` / `report-model` / `ai-summary` / `markdown-render` / `natural-time` / `redact` 等模块）。
 - pi-token-stats 仓库归档，保留 git 历史。
 

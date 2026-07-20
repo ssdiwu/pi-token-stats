@@ -20,16 +20,16 @@ export interface PanelDataPayload {
 
 export async function loadInsightsPanelData(locale: UiLocale, now: Date): Promise<PanelDataPayload> {
 	const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+	const todayRange = { label: "today", since: todayStart, until: now.getTime() + 1 };
 	const yesterdayDate = new Date(now);
 	yesterdayDate.setDate(yesterdayDate.getDate() - 1);
 	const yesterday = getLocalDateString(yesterdayDate);
 	const [{ sessions }, cachedDaily, auditRecords, dteamRecords] = await Promise.all([
-		scanSessions({ modifiedSince: todayStart }),
+		scanSessions({ entryRange: todayRange }),
 		readDaySummary(yesterday),
 		scanAuditUsage(),
 		scanDteamUsage(),
 	]);
-	const todayRange = { label: "today", since: todayStart, until: now.getTime() + 1 };
 	const numeric = buildTodayReportFromSessions(
 		sessions,
 		locale,

@@ -47,13 +47,12 @@ test("单日结果使用日报标题与归档文案", () => {
 	assert.match(response.body, /已归档/);
 });
 
-test("多日结果列出日期与路径", () => {
+test("多日结果只列归档摘要，不显示日报正文", () => {
 	const summary = makeSummary();
-	const report = makeReport();
 	const response = buildDailyResponse(
 		[
-			{ date: "2026-07-08", markdown: "a", summary, errors: [], savedPath: "/tmp/2026-07-08.md" },
-			{ date: "2026-07-09", markdown: "b", summary, errors: [], savedPath: "/tmp/2026-07-09.md" },
+			{ date: "2026-07-08", markdown: "# PRIVATE_A\n正文 A", summary, errors: [], savedPath: "/tmp/2026-07-08.md" },
+			{ date: "2026-07-09", markdown: "# PRIVATE_B\n正文 B", summary, errors: [], savedPath: "/tmp/2026-07-09.md" },
 		],
 		[],
 		"en",
@@ -61,6 +60,28 @@ test("多日结果列出日期与路径", () => {
 	assert.match(response.body, /2026-07-08/);
 	assert.match(response.body, /2026-07-09/);
 	assert.match(response.title, /Multi-day session reports/);
+	assert.doesNotMatch(response.body, /PRIVATE_A|PRIVATE_B|正文 A|正文 B/);
+});
+
+test("runDailyReports 按最早日报窗口裁剪会话扫描", async () => {
+	const summary = makeSummary();
+	let scanOptions: { modifiedSince?: number; entryRange?: { since: number; until: number } } | undefined;
+	await runDailyReports(
+		parseDailyCommand("2026-07-08 到 2026-07-09"),
+		{ hasUI: false, cwd: "/tmp", model: undefined, modelRegistry: { getAvailable: () => [] } } as never,
+		"zh-CN",
+		{
+			readConfig: async () => ({ outputDir: "/tmp/reports" }),
+			resolveModel: () => ({ source: "unavailable" as const }),
+			scanSessions: (async (options: typeof scanOptions) => { scanOptions = options; return { sessions: [] }; }) as never,
+			probeDailyReportExists: async () => false,
+			buildDayReport: async () => ({ markdown: "# ok", summary, errors: [] }),
+			saveDailyReport: async (date) => ({ path: `/tmp/reports/${date}.md` }),
+		},
+	);
+	assert.equal(scanOptions?.modifiedSince, undefined);
+	assert.equal(scanOptions?.entryRange?.since, new Date(2026, 6, 8).getTime());
+	assert.equal(scanOptions?.entryRange?.until, new Date(2026, 6, 10).getTime());
 });
 
 test("全部失败返回失败汇总", () => {

@@ -21,7 +21,11 @@ function buildRangeReportFromSessions(sessions: Awaited<ReturnType<typeof scanSe
 }
 
 export async function buildRangeReport(range: TimeRange, locale: UiLocale): Promise<Report> {
-	const [{ sessions }, auditRecords, dteamRecords] = await Promise.all([scanSessions(), scanAuditUsage(), scanDteamUsage()]);
+	const [{ sessions }, auditRecords, dteamRecords] = await Promise.all([
+		scanSessions({ entryRange: range }),
+		scanAuditUsage(),
+		scanDteamUsage(),
+	]);
 	const auditUsage = rollupAuditUsage(filterAuditUsage(auditRecords, range));
 	const dteamUsage = rollupDteamUsage(filterDteamUsage(dteamRecords, range));
 	return buildRangeReportFromSessions(sessions, range, locale, auditUsage, dteamUsage);
