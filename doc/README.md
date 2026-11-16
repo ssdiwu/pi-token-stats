@@ -1,19 +1,49 @@
 # pi-session-insights 文档入口
 
-## 阅读地图
+本文件只做导航。每类文档各有一处权威，不在此处复述正文内容。
 
-- `doc/10-需求规格/PRD-pi-session-insights.md`：**当前基准**。research + grill 对齐后落成的需求规格（定位、形态分层、K0~K6 维度、按天 LLM 读写、配置化日报归档、测试接缝、Out of Scope）。新功能 / 实施以此为依据。
-- `doc/20-能力参考/01-context-mode会话信息分析参考.md`：对照 context-mode，论证「Pi 原生 JSONL 够丰富、可只读长出 insight 层」并给出三档借鉴分级（设计冲突 / 同思路 / 候选 K1~K6 改造点）。
-- `doc/20-能力参考/02-pi-dusage即时加载面板参考.md`：对照本地 `pi-dusage` 的先挂载 overlay、后异步刷新机制，界定 `/insights` 即时加载面板的可借范围。
-- `README.md`：当前能力（量纲 + 多维分析 + 项目化日报 + pi-dgoal 审核 / dteam worker 用量聚合）、`/insights` 命令、统计口径、项目结构、安装与验证。
-- `AGENTS.md`：给 agent 的实现边界（guardrails）、代码边界、验证要求、Out of Scope。
-- `index.ts`：Pi extension 入口，注册 `/insights` 命令 + `insights` tool。
-- `src/`：分层实现——`types.ts`（类型）/ `session-scan.ts`（异步扫描，复用自 pi-daily）/ `audit-usage.ts`（pi-dgoal 审核用量扫描与聚合）/ `dteam-usage.ts`（dteam worker 用量扫描与聚合）/ `locale.ts`（多语言 + locale 解析）/ `usage-rollup.ts`（K0 量纲聚合，纯函数）/ `dimensions.ts`（多维聚合 K1/K2/K3/K5）/ `time-range.ts`（时间范围解析 + LLM）/ `format.ts`（渲染）/ `insights.ts`（命令主逻辑）/ `daily-command.ts`、`daily-options.ts`、`daily-config.ts`、`daily-archive.ts`、`daily-orchestrator.ts`（日报参数、日界、配置、归档与编排）/ `day-cache.ts`（按天缓存）/ `day-report.ts`（日报生成链）/ `date-utils.ts`（本地日期字符串与自然日 TimeRange）/ `report-session-extract.ts`（日报事实提取）/ `report-model.ts`（日报模型聚合）/ `report-ai-summary.ts`（AI 项目化日报）/ `report-markdown.ts`（fallback 渲染）/ `report-labels.ts`（日报正文文案）/ `daily-ui-labels.ts`（日报命令 UI 文案）/ `panel-data.ts`（L2 overlay 面板数据加载）/ `report-redact.ts`（脱敏）/ `panel.ts`（L2 overlay 面板）。
-- `doc/术语表.md`：日报归属、自适应默认日界等项目术语。
-- `doc/决策档案/`：[0001](./决策档案/0001-统一使用原生select与input对话框.md)（select/input，**已被 0003 取代**）；[0002](./决策档案/0002-只读不拦截会话分析边界.md)（只读不拦截边界）；[0003](./决策档案/0003-展示层升级L2overlay面板.md)（L2 overlay 面板）；[0004](./决策档案/0004-自适应默认日报日界.md)（自适应默认日报日界）；[0005](./决策档案/0005-配置化日报归档与模型.md)（配置化日报归档与模型）；[0006](./决策档案/0006-工具结果人类可读投影.md)（工具结果人类可读投影）；[0007](./决策档案/0007-独立daily入口与归档覆盖策略.md)（独立 daily 入口与归档覆盖策略）。索引见 `doc/决策档案/README.md`。
-- `doc/30-路线图/路线地图.md`：pi-token-stats 时代路线图，**已被 PRD 取代**，保留作历史参考。
-- `package.json`：Pi package 清单与扩展加载声明。
+1. [执行计划与当前状态](../PLAN.md)
+2. [工程入口与能力口径](../README.md)
+3. [需求规格](./10-需求规格/PRD-pi-session-insights.md)
+4. [术语表](./术语表.md)
+5. [决策档案](./决策档案/)
+6. [经验笔记](./经验笔记.md)
+7. [代理协作规则](../AGENTS.md)
 
-## 文档扩展条件
+分层约定：
 
-只有当出现难逆转、无上下文会困惑且有真实权衡的设计决策时，才新增 `doc/决策档案/`。
+- `README.md` 是**现行能力与统计口径**的唯一正文（命令、工具、UI 行为、时间表达、项目结构）。
+- `doc/10-需求规格/PRD-pi-session-insights.md` 是**需求与范围**的唯一正文；实现进度与口径以 README 与代码为准。
+- `doc/决策档案/` 是难逆转决策的刻碑，写了不删；修订以「后记」追加，不改写原文结论。
+- `doc/经验笔记.md` 是可改做法与避坑经验的活页。
+- `doc/references/` 只保存来源、验证记录与历史阶段，不作为并行需求或现行实现权威。
+
+本机原始现场（截图、抓包、原始日志）放仓库根 `.artifacts/`，已被 Git 忽略；引用它不表示文件随仓库分发。
+
+## 需求规格
+
+| 文件 | 回答什么 |
+|---|---|
+| [PRD-pi-session-insights.md](./10-需求规格/PRD-pi-session-insights.md) | 定位、形态分层、候选维度、按天 LLM 读写、配置化归档、测试接缝、Out of Scope；顶部附「当前实现对照」说明与实现的关系 |
+
+## 决策与经验
+
+- [决策档案/README.md](./决策档案/README.md)：ADR 索引，一行一条（编号 + 标题 + 一句话主旨）。
+- [经验笔记.md](./经验笔记.md)：可改的做法与避坑经验（现象 + 做法 + 证据）。
+
+## 证据与历史（`doc/references/`）
+
+只保存来源、验证记录与历史阶段，不维护第二份现行正文：
+
+| 文件 | 内容 |
+|---|---|
+| [01-context-mode会话信息分析参考.md](./references/01-context-mode会话信息分析参考.md) | 对照 context-mode 的分析层心智模型：论证「Pi 原生 JSONL 够丰富、可只读长出 insight 层」及三档借鉴分级 |
+| [02-pi-dusage即时加载面板参考.md](./references/02-pi-dusage即时加载面板参考.md) | 对照本地 pi-dusage 的先挂载 overlay、后异步刷新机制，界定 `/insights` 面板可借范围 |
+| [路线地图.md](./references/路线地图.md) | pi-token-stats 时代路线图，已被 PRD 取代，仅作历史追溯 |
+
+## 维护规则
+
+- 能力、统计口径、命令或工具变化 → 更新根 `README.md`；需求与范围变化 → 更新需求规格。
+- 难逆转决策 → 新增 ADR 并同步 `doc/决策档案/README.md`；可复用做法 → 追加 `doc/经验笔记.md`。
+- 用户可感知的已完成变化 → `CHANGELOG.md`；本机原始现场 → `.artifacts/`（Git 忽略）。
+- 当前状态与接续位置 → 只更新根 `PLAN.md`，不从 `doc/references/` 的历史记录倒推现状。

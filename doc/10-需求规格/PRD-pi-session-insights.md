@@ -1,6 +1,8 @@
 # PRD: pi-session-insights
 
-> 状态：对齐后规格（research + grill 收口的基准）。配套参考：`doc/20-能力参考/01-context-mode会话信息分析参考.md`。
+> 状态：对齐后规格（research + grill 收口的基准）。配套参考：`doc/references/01-context-mode会话信息分析参考.md`（已迁入证据与历史层，不作为现行权威）。
+>
+> **当前实现对照**（2026-07-20 补，只说明本文与实现的关系，不改下文任何结论）：能力与统计口径以根 `README.md` 和代码为准。与现状有三处差——日报入口已是独立 `/daily` 命令与 `daily` tool（见 ADR 0007），不再是迁移期兼容；维度实现到 K0/K1/K2/K3/K5，K4 工具延迟与 K6 工作流画像仍是候选、未实现；「决策档案待补」两条已分别落为 ADR 0002、ADR 0003。
 > 本 PRD 只描述"要做什么 / 为什么"，不规定实现步骤；具体文件路径、schema 细节等易过期项留实施阶段定。
 
 ## Problem Statement

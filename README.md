@@ -7,7 +7,7 @@
 ## 定位
 
 - **只读不拦截**：只读 `~/.pi/agent/sessions/**/*.jsonl` 及本机扩展产生的脱敏数字账本，不拦截工具调用、不做 sandbox。对照 context-mode 的分析层心智模型，但靠读取既有记录达到深度，不付拦截税。
-- 调研与设计依据见 `doc/20-能力参考/01-context-mode会话信息分析参考.md` 和 `doc/10-需求规格/PRD-pi-session-insights.md`。
+- 调研与设计依据见 `doc/references/01-context-mode会话信息分析参考.md`（历史参考，非现行权威）和 `doc/10-需求规格/PRD-pi-session-insights.md`。
 
 ## 当前功能（量纲 + 多维分析 + 项目化日报）
 
@@ -118,7 +118,8 @@ pi-session-insights/
 │   ├── obsidian-sync.ts    # 遗留 Obsidian 落点工具，不参与默认日报归档
 │   └── panel.ts            # L2 overlay 交互面板（今天消耗/昨天日报切换）
 ├── tests/                  # Node 内置 test（TS 直接 import .ts）
-├── doc/                    # 需求规格、调研参考、决策档案
+├── PLAN.md                 # 当前执行状态与接续位置
+├── doc/                    # 文档：入口、需求规格、决策档案、经验笔记、references（来源与历史）
 └── package.json            # Pi package 清单
 ```
 
@@ -127,7 +128,7 @@ pi-session-insights/
 把本仓库路径加入 `~/.pi/agent/settings.json` 的 `packages`：
 
 ```json
-"/Users/diwu/Workspace/Codes/Githubs/pi-session-insights"
+"/Users/diwu/Workspace/Codes/Githubs/pi-extensions/pi-session-insights"
 ```
 
 然后在 Pi 中执行：
