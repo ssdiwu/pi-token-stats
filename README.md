@@ -2,12 +2,12 @@
 
 `pi-session-insights` 是一个 Pi extension（扩展）包，做**只读的 Pi 会话信息拓展**：从本地 session JSONL 聚合会话消耗与活动，提供多维分析 + 项目化日报。
 
-> 当前进度：已实现 K0 量纲 + 多维分析（K1/K2/K3/K5）+ 按天摘要缓存 + 项目化日报（复用 pi-daily 日报链）+ 配置化自动归档 + L2 交互面板。详见 `doc/10-需求规格/PRD-pi-session-insights.md`。
+> 当前进度：已实现 K0 量纲 + 多维分析（K1/K2/K3/K5）+ 按天摘要缓存 + 项目化日报（复用 pi-daily 日报链）+ 配置化自动归档 + L2 交互面板。详见 `doc/规格/PRD-pi-session-insights.md`。
 
 ## 定位
 
 - **只读不拦截**：只读 `~/.pi/agent/sessions/**/*.jsonl` 及本机扩展产生的脱敏数字账本，不拦截工具调用、不做 sandbox。对照 context-mode 的分析层心智模型，但靠读取既有记录达到深度，不付拦截税。
-- 调研与设计依据见 `doc/references/01-context-mode会话信息分析参考.md`（历史参考，非现行权威）和 `doc/10-需求规格/PRD-pi-session-insights.md`。
+- 调研与设计依据见 `doc/references/01-context-mode会话信息分析参考.md`（历史参考，非现行权威）和 `doc/规格/PRD-pi-session-insights.md`。
 
 ## 当前功能（量纲 + 多维分析 + 项目化日报）
 
@@ -119,7 +119,7 @@ pi-session-insights/
 │   └── panel.ts            # L2 overlay 交互面板（今天消耗/昨天日报切换）
 ├── tests/                  # Node 内置 test（TS 直接 import .ts）
 ├── PLAN.md                 # 当前执行状态与接续位置
-├── doc/                    # 文档：入口、需求规格、决策档案、经验笔记、references（来源与历史）
+├── doc/                    # 文档：入口、规格、决策档案、经验笔记、references（来源与历史）
 └── package.json            # Pi package 清单
 ```
 

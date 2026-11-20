@@ -3,7 +3,7 @@
 ## 文件职责与阅读顺序
 
 - 本文件只记录会话分析与日报扩展长期隐私、数据和交付边界，不复制当前维度、模块清单或其他包的安装状态。
-- 修改前读取 `README.md`、`PLAN.md`、`doc/README.md`、当前需求规格、目标目录 README、`package.json`、实现和测试；能力与统计口径以当前代码和 README 为准，需求与范围以 `doc/10-需求规格/` 为准。
+- 修改前读取 `README.md`、`PLAN.md`、`doc/README.md`、当前需求规格、目标目录 README、`package.json`、实现和测试；能力与统计口径以当前代码和 README 为准，需求与范围以 `doc/规格/` 为准。
 - `doc/references/` 下的调研与历史文档、以及被覆盖的 ADR 只提供背景，不作为当前实现权威。
 
 ## 只读与隐私边界
