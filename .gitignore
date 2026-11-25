@@ -1,5 +1,4 @@
 node_modules/
-package-lock.json
 .DS_Store
 
 # 本机原始现场（截图、抓包、原始日志）：本地证据，不随仓库分发；README 除外以便说明目录用途

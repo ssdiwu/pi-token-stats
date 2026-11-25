@@ -1,9 +1,11 @@
 # pi-session-insights 文档入口
 
+> **English contribution guide:** [README.md](../README.md) (usage) · [README-zh.md](../README-zh.md) (Chinese companion) · [AGENTS.md](../AGENTS.md) (engineering rules). Keep both READMEs and this map in sync; user-visible release notes go to `CHANGELOG.md`.
+
 本文件只做导航。每类文档各有一处权威，不在此处复述正文内容。
 
 1. [执行计划与当前状态](../PLAN.md)
-2. [工程入口与能力口径](../README.md)
+2. [工程入口与能力口径](../README.md) / [中文版](../README-zh.md)
 3. [规格正文](./规格/)
 4. [术语表](./术语表.md)
 5. [决策档案](./决策档案/)
@@ -12,7 +14,7 @@
 
 分层约定：
 
-- `README.md` 是**现行能力与统计口径**的唯一正文（命令、工具、UI 行为、时间表达、项目结构）。
+- `README.md` 与 `README-zh.md` 是**现行能力与统计口径**同一正文的英文／中文版本（命令、工具、UI 行为、时间表达、项目结构），两份同步维护。
 - `doc/规格/` 是**契约、接口与产品规则**的唯一正文（当前为 PRD）；实现进度与口径以 README 与代码为准。
 - `doc/决策档案/` 是难逆转决策的刻碑，写了不删；修订以「后记」追加，不改写原文结论。
 - `doc/经验笔记.md` 是可改做法与避坑经验的活页。
@@ -43,7 +45,7 @@
 
 ## 维护规则
 
-- 能力、统计口径、命令或工具变化 → 更新根 `README.md`；需求与范围变化 → 更新 `doc/规格/`。
+- 能力、统计口径、命令或工具变化 → 同步更新根 `README.md` 与 `README-zh.md`；需求与范围变化 → 更新 `doc/规格/`。
 - 难逆转决策 → 新增 ADR 并同步 `doc/决策档案/README.md`；可复用做法 → 追加 `doc/经验笔记.md`。
-- 用户可感知的已完成变化 → `CHANGELOG.md`；本机原始现场 → `.artifacts/`（Git 忽略）。
+- 日常事实先写入本仓中文 `CHANGELOG-zh.md`；准备发布时按版本把用户可感知的已完成变化同步到英文 `CHANGELOG.md`；两份 changelog 都随 npm 包发布。本机原始现场 → `.artifacts/`（Git 忽略）。
 - 当前状态与接续位置 → 只更新根 `PLAN.md`，不从 `doc/references/` 的历史记录倒推现状。

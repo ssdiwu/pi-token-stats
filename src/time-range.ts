@@ -2,7 +2,7 @@
 // 两路解析：LLM 语义解析优先（resolveRangeWithLlm），失败回退本地规则（parseRange）。
 // 日报窗口语义（工作日边界/跨午夜）留后续 phase 引入 daily natural-time。
 
-import { complete } from "@earendil-works/pi-ai";
+import { complete } from "./model-completion.ts";
 import type { ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
 import { t } from "./locale.ts";

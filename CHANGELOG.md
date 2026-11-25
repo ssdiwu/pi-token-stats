@@ -1,33 +1,41 @@
 # Changelog
 
-All notable changes to `pi-session-insights` are documented in this file.
+This project follows the basic format of [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). For tagged releases, use the version from the Git tag. The tagged release is maintained by the release owner in this English `CHANGELOG.md`; daily user-perceivable changes are recorded in the Chinese `CHANGELOG-zh.md` in this repository. Both files contain user-perceivable facts only and ship in the npm package.
+
+For new releases, use headings in the format `## [x.y.z] - YYYY-MM-DD`. When an entry can be linked unambiguously to a GitHub issue, append `(#xx)`. Historical entries keep their original heading format.
+
+## [0.2.2] - 2026-11-25
+
+### Changed
+
+- Restored `/insights` and `/daily` on Pi 1.6.0, including model-assisted time ranges and daily summaries.
 
 ## [0.2.1] - 2026-07-20
 
 ### Fixed
 
-- **范围扫描内存峰值**：`/insights` 与 `/daily` 先筛选候选文件、逐行读取并仅保留目标范围事件，同时串行化并发扫描，避免多次范围查询叠加全量 JSONL 导致 Node.js OOM。
-- **日期范围解析**：中文 `7月18日到7月19日` 不再误判为“最近 18 天”；`/daily` 支持按当前年份解析 `0718 和 0719` 形式的紧凑月日范围。
-- **日报工具路由**：明确数字洞察与日报生成职责；多日请求一次调用 `daily`，逐日归档且只返回批次摘要。
+- **Peak memory during range scans**: `/insights` and `/daily` now filter candidate files first, read line by line, and retain only events in the target range, while serializing concurrent scans, so multiple range queries no longer stack full JSONL data and cause Node.js OOM.
+- **Date-range parsing**: a Chinese-language date range meaning "July 18 to July 19" is no longer misread as "the last 18 days"; `/daily` now parses compact month-day ranges in the form `0718 and 0719` using the current year.
+- **Daily-report tool routing**: clarified the split between numeric insights and daily-report generation; multi-day requests call `daily` once, archive each day, and return only a batch summary.
 
 ## [0.2.0] - 2026-07-18
 
 ### Added
 
-- **独立 `/daily` 命令与 `daily` tool**：项目化日报从 `/insights daily` 子命令升级为独立入口，LLM 可通过结构化参数（`date`/`range`/`projectCurrent`/`dayStart`）直接生成日报；pi-daily 卸载后由本项目接管每日日报。
-- **日报归档覆盖策略**：无已有文件直接写入；有已有文件时 TUI 一次确认是否覆盖（多天合并确认），非交互模式（`-p`/JSON/RPC）默认跳过已有文件并在结果提示。
-- **dteam worker 用量**：`/insights` 与今日面板只读聚合独立 `dteam-usage.jsonl`，按时间范围去重展示 worker 数、模型回复数、token 与费用，并保留模型和实际档位维度。
+- **Standalone `/daily` command and `daily` tool**: project-based daily reports were promoted from the `/insights daily` subcommand to a standalone entry point; the LLM can generate reports directly via structured parameters (`date`/`range`/`projectCurrent`/`dayStart`); when pi-daily is uninstalled, this project takes over daily reporting.
+- **Daily-report archive overwrite policy**: writes directly when no file exists; when a file exists, the TUI asks once whether to overwrite (combined confirmation for multiple days), while non-interactive modes (`-p`/JSON/RPC) skip existing files by default and note this in the result.
+- **dteam worker usage**: `/insights` and the today panel read-only aggregate the separate `dteam-usage.jsonl`, deduplicating by time range to show worker counts, model replies, tokens, and cost, preserving model and actual tier dimensions.
 
 ### Removed
 
-- **`/insights daily` 子命令**：项目化日报升级为独立 `/daily` 命令，`/insights` 回归纯数字面板。
+- **`/insights daily` subcommand**: project-based daily reports were promoted to the standalone `/daily` command, returning `/insights` to a purely numeric panel.
 
 ## [0.1.0] - 2026-07-16
 
 ### Added
 
-- **pi-dgoal 审核用量**：`/insights` 只读聚合 `audit-usage.jsonl` 中脱敏且去重的审核 token 与费用，并按所选时间范围展示。
+- **pi-dgoal audit usage**: `/insights` read-only aggregates redacted, deduplicated audit tokens and cost from `audit-usage.jsonl` and displays them for the selected time range.
 
 ### Changed
 
-- **工具结果人类可读投影**：`insights` 工具默认显示范围摘要，展开时显示报告正文；统计 `details` 保留给内部使用，不直接展示。
+- **Human-readable tool-result projection**: the `insights` tool shows a range summary by default and the report body when expanded; statistical `details` remain internal and are not displayed directly.

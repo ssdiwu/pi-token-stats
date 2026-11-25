@@ -3,7 +3,7 @@
 ## 文件职责与阅读顺序
 
 - 本文件只记录会话分析与日报扩展长期隐私、数据和交付边界，不复制当前维度、模块清单或其他包的安装状态。
-- 修改前读取 `README.md`、`PLAN.md`、`doc/README.md`、当前需求规格、目标目录 README、`package.json`、实现和测试；能力与统计口径以当前代码和 README 为准，需求与范围以 `doc/规格/` 为准。
+- 修改前读取 `README.md` / `README-zh.md`、`PLAN.md`、`doc/README.md`、当前需求规格、目标目录 README、`package.json`、实现和测试；能力与统计口径以当前代码和 README 为准，需求与范围以 `doc/规格/` 为准。
 - `doc/references/` 下的调研与历史文档、以及被覆盖的 ADR 只提供背景，不作为当前实现权威。
 
 ## 只读与隐私边界
@@ -33,8 +33,16 @@ npm run check
 - 入口、日报或面板变化还需从当前仓库隔离加载扩展，分别验证纯文本、工具调用和真实 TUI；真实 LLM 日报测试只在获得成本授权后运行。
 - 只读边界可定向扫描拦截/sandbox 相关实现；发现匹配时必须人工判断，不以关键词结果代替代码审查。
 
+## 文档语言与发布记录
+
+- 对外 README 以英文 `README.md` 为默认入口，配套完整中文 `README-zh.md`；顶部互链，安装、配置、命令、开发、测试与公开契约入口同步到两种语言，链接只指向仓库内真实文件。
+- `doc/README.md` 顶部保留简短英文贡献导航，中文导航正文继续维护；公开贡献说明（两份 README 与 `doc/README.md`）同步更新。`AGENTS.md`、ADR、规格与历史材料按主要读者决定语言，内部资料可中文；工具名、命令、配置键、环境变量和 API 字段保持原样。
+- 两份变更日志都在本 GitHub 仓库维护：`CHANGELOG.md` 是英文发布记录，`CHANGELOG-zh.md` 是中文日常记录；两份只写用户可感知事实，不写验证日志、内部过程或纯文档整理。
+- 日常用中文把已完成的用户可感知变化写入 `CHANGELOG-zh.md`；准备发布（release）时按版本把同一版本的用户可感知条目同步进英文 `CHANGELOG.md`，两份都保留该版本记录，并核对版本、日期与 issue 链接。
+- `README.md` 是英文默认版（npm 默认展示），`README-zh.md` 是同包附带的中文版；两份 README 与两份 changelog 都随 npm 包发布。发布前用 `npm pack --dry-run --ignore-scripts --json` 核对清单包含 `README.md`、`README-zh.md`、`CHANGELOG.md`、`CHANGELOG-zh.md`。
+
 ## 文档与 Git
 
-- 数据源、统计口径、隐私、命令/工具、归档 schema 或用户行为变化时同步 README、需求规格和必要 ADR。
-- `CHANGELOG.md` 只记录用户可感知变化。
+- 数据源、统计口径、隐私、命令/工具、归档 schema 或用户行为变化时同步两份 README、需求规格和必要 ADR。
+- `CHANGELOG.md` 只记录发布时整理的用户可感知变化；日常事实按上方「文档语言与发布记录」处理。
 - 未经用户明确要求，不执行 commit、push、tag、npm publish、修改用户 session 或写入用户归档目录。

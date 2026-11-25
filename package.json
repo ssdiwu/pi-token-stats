@@ -1,6 +1,6 @@
 {
 	"name": "pi-session-insights",
-	"version": "0.2.1",
+	"version": "0.2.2",
 	"description": "Pi extension for session information insights — usage, projects, tools, errors, health, and daily narrative.",
 	"type": "module",
 	"keywords": [
@@ -18,6 +18,9 @@
 		"index.ts",
 		"src/",
 		"README.md",
+		"README-zh.md",
+		"CHANGELOG.md",
+		"CHANGELOG-zh.md",
 		"doc"
 	],
 	"scripts": {
@@ -32,8 +35,9 @@
 		"typebox": "*"
 	},
 	"devDependencies": {
-		"@earendil-works/pi-coding-agent": "^0.79.10",
-		"@earendil-works/pi-tui": "^0.79.10",
+		"@earendil-works/pi-ai": "1.6.0",
+		"@earendil-works/pi-coding-agent": "1.6.0",
+		"@earendil-works/pi-tui": "1.6.0",
 		"@types/node": "^22.19.15",
 		"tsx": "^4.23.0",
 		"typebox": "^1.1.38",
